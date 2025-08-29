@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Budget API Test</h1>
+    <button onclick="testDashboard()">Test Dashboard API</button>
+    <button onclick="testCreateBudget()">Test Create Budget</button>
+    <button onclick="testGetBudget()">Test Get Active Budget</button>
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000';
+
+        async function testDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/spendings/dashboard`);
+                const data = await response.json();
+                document.getElementById('results').innerHTML = `
+                    <h3>Dashboard Response:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('results').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testCreateBudget() {
+            try {
+                const response = await fetch(`${API_BASE}/budgets`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        budget_type: 'monthly',
+                        amount: 1000
+                    })
+                });
+                const data = await response.json();
+                document.getElementById('results').innerHTML = `
+                    <h3>Create Budget Response:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('results').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testGetBudget() {
+            try {
+                const response = await fetch(`${API_BASE}/budgets/active`);
+                const data = await response.json();
+                document.getElementById('results').innerHTML = `
+                    <h3>Active Budget Response:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('results').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "budget-tracking-backend"
+version = "0.1.0"
+description = "Budget Tracking API"
+authors = [{name = "Your Name"}]
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic",
+  "python-dotenv",
+  "sqlalchemy",
+  "alembic",
+  "passlib[bcrypt]",
+  "python-jose[cryptography]",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "httpx", "pytest-asyncio"]
+
+[tool.pytest.ini_options]
+pythonpath = ["app"]
+asyncio_mode = "auto"
