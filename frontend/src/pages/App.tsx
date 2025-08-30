@@ -37,13 +37,29 @@ const AppContent: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log('Loading dashboard data...');
+      
       const [statsResponse, spendingsResponse] = await Promise.all([
         authenticatedFetch(`${API_BASE}/api/spendings/dashboard`),
         authenticatedFetch(`${API_BASE}/api/spendings`)
       ]);
       
+      console.log('Stats response status:', statsResponse.status);
+      console.log('Spendings response status:', spendingsResponse.status);
+      
+      if (!statsResponse.ok) {
+        console.error('Dashboard stats failed:', await statsResponse.text());
+      }
+      
+      if (!spendingsResponse.ok) {
+        console.error('Spendings fetch failed:', await spendingsResponse.text());
+      }
+      
       const dashboardStats = await statsResponse.json();
       const allSpendings = await spendingsResponse.json();
+      
+      console.log('Dashboard stats:', dashboardStats);
+      console.log('All spendings count:', allSpendings.length);
       
       setStats(dashboardStats);
       setSpendings(allSpendings);
@@ -74,18 +90,37 @@ const AppContent: React.FC = () => {
 
   const handleAddSpending = async (spending: SpendingCreate) => {
     try {
-      const response = await authenticatedFetch(`${API_BASE}/api/spendings/`, {
+      console.log('Attempting to create spending:', spending);
+      console.log('API endpoint:', `${API_BASE}/api/spendings`);
+      
+      const response = await authenticatedFetch(`${API_BASE}/api/spendings`, {
         method: 'POST',
         body: JSON.stringify(spending),
       });
+      
+      console.log('Create spending response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Create spending failed:', errorText);
+        throw new Error(`Failed to create spending: ${response.status} ${errorText}`);
+      }
+      
       const newSpending = await response.json();
+      console.log('Created spending:', newSpending);
+      
       setSpendings(prev => [newSpending, ...prev]);
+      
       // Refresh dashboard stats
       const statsResponse = await authenticatedFetch(`${API_BASE}/api/spendings/dashboard`);
-      const newStats = await statsResponse.json();
-      setStats(newStats);
+      if (statsResponse.ok) {
+        const newStats = await statsResponse.json();
+        setStats(newStats);
+        console.log('Dashboard stats refreshed');
+      }
     } catch (error) {
       console.error('Failed to add spending:', error);
+      alert(`Failed to add spending: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

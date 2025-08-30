@@ -104,6 +104,8 @@ def get_dashboard_stats(
     current_user: User = Depends(get_current_user)
 ):
     """Get spending dashboard statistics for current user"""
+    print(f"[DASHBOARD] Getting stats for user {current_user.id} ({current_user.email})")
+    
     today = date.today()
     first_day_month = today.replace(day=1)
     
