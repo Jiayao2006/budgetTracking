@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Database migration script for PostgreSQL setup
-Run this when you have a PostgreSQL DATABASE_URL set up
+Production deployment script for Render
+This script is called during deployment to set up the database
 """
 
 import os
 import sys
+import logging
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from passlib.context import CryptContext

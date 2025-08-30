@@ -5,6 +5,7 @@ Creates the database with proper schema and seed data
 """
 
 import sys
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from passlib.context import CryptContext
@@ -14,13 +15,21 @@ from datetime import date
 sys.path.append('.')
 
 from app.models import Base, User, Spending
-from app.database import SQLALCHEMY_DATABASE_URL
 
 def init_database():
     """Initialize the database with proper schema and seed data"""
     
+    # Get database URL from environment variable, fallback to SQLite
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./budget.db")
+    
+    # Handle PostgreSQL URL format
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
+    
+    print(f"Connecting to database: {DATABASE_URL.split('@')[0] if '@' in DATABASE_URL else DATABASE_URL}")
+    
     # Create engine
-    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+    engine = create_engine(DATABASE_URL)
     
     # Create all tables
     print("Creating database tables...")
