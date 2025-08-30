@@ -17,6 +17,7 @@ dependencies = [
   "passlib[bcrypt]",
   "python-jose[cryptography]",
   "psycopg[binary]",
+  "psycopg2-binary",
 ]
 
 [project.optional-dependencies]
