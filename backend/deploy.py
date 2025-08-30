@@ -32,8 +32,9 @@ def deploy_database():
         
         # Test database connection
         print("🧪 Testing database connection...")
+        from sqlalchemy import text
         with engine.connect() as conn:
-            result = conn.execute("SELECT 1")
+            result = conn.execute(text("SELECT 1"))
             print("✅ Database connection successful!")
         
         print("✅ Database deployment completed successfully!")
