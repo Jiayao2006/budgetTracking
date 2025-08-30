@@ -25,10 +25,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
   }
 
   // Prepare data for pie chart
-  const pieChartData = stats.category_distribution.map((item, index) => ({
+  const pieChartData = stats?.category_distribution?.map((item, index) => ({
     ...item,
     fill: CHART_COLORS[index % CHART_COLORS.length]
-  }));
+  })) || [];
 
   return (
     <Container fluid className="py-4">
@@ -48,7 +48,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
                 <FaMoneyBillWave className="mb-3" size={32} />
                 <Card.Title className="h6 mb-2">Monthly Total</Card.Title>
                 <Card.Text className="h4 mb-0 fw-bold">
-                  ${stats.total_spending.toFixed(2)}
+                  ${stats?.total_spending?.toFixed(2) || '0.00'}
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -69,7 +69,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
                 <FaCalendarDay className="mb-3" size={32} />
                 <Card.Title className="h6 mb-2">Daily Average</Card.Title>
                 <Card.Text className="h4 mb-0 fw-bold">
-                  ${stats.average_daily.toFixed(2)}
+                  ${stats?.average_daily?.toFixed(2) || '0.00'}
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -90,7 +90,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
                 <FaChartLine className="mb-3" size={32} />
                 <Card.Title className="h6 mb-2">Weekly Total</Card.Title>
                 <Card.Text className="h4 mb-0 fw-bold">
-                  ${stats.weekly_spending.toFixed(2)}
+                  ${stats?.weekly_spending?.toFixed(2) || '0.00'}
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -111,7 +111,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
                 <FaReceipt className="mb-3" size={32} />
                 <Card.Title className="h6 mb-2">Transactions</Card.Title>
                 <Card.Text className="h4 mb-0 fw-bold">
-                  {stats.monthly_transactions}
+                  {stats?.monthly_transactions || 0}
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -132,7 +132,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
                 <FaCrown className="mb-3" size={32} />
                 <Card.Title className="h6 mb-2">Highest Spend</Card.Title>
                 <Card.Text className="h4 mb-0 fw-bold">
-                  ${stats.highest_single_spending.toFixed(2)}
+                  ${stats?.highest_single_spending?.toFixed(2) || '0.00'}
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -153,7 +153,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
                 <FaTags className="mb-3" size={32} />
                 <Card.Title className="h6 mb-2">Categories</Card.Title>
                 <Card.Text className="h4 mb-0 fw-bold">
-                  {stats.category_distribution.length}
+                  {stats?.category_distribution?.length || 0}
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -317,7 +317,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
             </Card.Header>
             <Card.Body className="p-4">
               <Row>
-                {stats.top_categories.map((cat, idx) => (
+                {(stats?.top_categories || []).map((cat, idx) => (
                   <Col md={6} lg={4} xl={2} key={cat.category} className="mb-3">
                     <div className="d-flex align-items-center p-3 bg-light rounded-3">
                       <div 

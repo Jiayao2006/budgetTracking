@@ -1,0 +1,87 @@
+/* Custom Calendar Styles */
+.custom-calendar {
+  width: 100%;
+}
+
+.calendar-table {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 2px;
+}
+
+.calendar-table th {
+  background-color: #f8f9fa !important;
+  border: 1px solid #dee2e6;
+  text-align: center;
+  vertical-align: middle;
+  padding: 8px 4px;
+}
+
+.calendar-cell {
+  background-color: white;
+  border: 1px solid #dee2e6 !important;
+  transition: background-color 0.2s ease;
+  min-height: 60px;
+}
+
+.calendar-cell:hover {
+  background-color: #f8f9fa !important;
+}
+
+.calendar-cell.empty-cell {
+  background-color: #f8f9fa !important;
+  cursor: not-allowed !important;
+}
+
+.calendar-cell.today-cell {
+  background-color: #007bff !important;
+  color: white;
+  border-color: #0056b3 !important;
+}
+
+.calendar-cell.today-cell:hover {
+  background-color: #0056b3 !important;
+}
+
+.calendar-cell.selected-cell {
+  background-color: #28a745 !important;
+  color: white;
+  border-color: #1e7e34 !important;
+}
+
+.calendar-cell.selected-cell:hover {
+  background-color: #1e7e34 !important;
+}
+
+.day-number {
+  text-align: left;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .calendar-table {
+    font-size: 0.8rem;
+  }
+  
+  .calendar-cell {
+    min-height: 45px;
+  }
+  
+  .calendar-table th {
+    padding: 4px 2px;
+  }
+}
+
+@media (max-width: 576px) {
+  .calendar-table {
+    font-size: 0.75rem;
+  }
+  
+  .calendar-cell {
+    min-height: 40px;
+  }
+  
+  .calendar-table th {
+    padding: 3px 1px;
+  }
+}

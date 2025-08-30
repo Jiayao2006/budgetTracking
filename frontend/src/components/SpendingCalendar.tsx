@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, ListGroup, Button, Modal, Form, Badge } from 'react-bootstrap';
 import { FaEdit, FaTrash, FaSave, FaTimes, FaCalendarAlt, FaShoppingCart, FaCalendarDay } from 'react-icons/fa';
-import Calendar from 'react-calendar';
 import { Spending, SpendingCreate } from '../types';
 import { formatDateLocal, parseDateLocal } from '../utils/dateUtils';
+import { CustomCalendar } from './CustomCalendar';
+import '../styles/custom-calendar.css';
 
 interface SpendingCalendarProps {
   spendings: Spending[];
@@ -38,40 +39,16 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   // Get spending totals by date
-  const spendingsByDate = spendings.reduce((acc, spending) => {
+  const spendingsByDate = (spendings || []).reduce((acc, spending) => {
     const date = spending.date;
     acc[date] = (acc[date] || 0) + spending.amount;
     return acc;
   }, {} as Record<string, number>);
 
   useEffect(() => {
-    const dateSpends = spendings.filter(s => s.date === selectedDate);
+    const dateSpends = (spendings || []).filter(s => s.date === selectedDate);
     setSelectedDateSpendings(dateSpends);
   }, [spendings, selectedDate]);
-
-  const formatDate = (date: Date) => {
-    return formatDateLocal(date);
-  };
-
-  const parseDate = (dateString: string) => {
-    return parseDateLocal(dateString);
-  };
-
-  const tileContent = ({ date }: { date: Date }) => {
-    const dateStr = formatDate(date);
-    const amount = spendingsByDate[dateStr];
-    
-    if (amount) {
-      return (
-        <div className="text-center mt-1">
-          <Badge bg="danger" style={{ fontSize: '0.6rem' }}>
-            ${amount.toFixed(0)}
-          </Badge>
-        </div>
-      );
-    }
-    return null;
-  };
 
   const startEdit = (spending: Spending) => {
     setEditingId(spending.id);
@@ -141,7 +118,7 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
                 <Button
                   className="today-btn"
                   size="sm"
-                  onClick={() => onDateSelect(formatDate(new Date()))}
+                  onClick={() => onDateSelect(formatDateLocal(new Date()))}
                 >
                   <FaCalendarDay className="me-1 me-sm-2" />
                   <span className="d-none d-sm-inline">Today</span>
@@ -150,15 +127,10 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
               </div>
             </Card.Header>
             <Card.Body className="p-3 p-lg-5 bg-white rounded-bottom">
-              <Calendar
-                onChange={(value) => {
-                  if (value instanceof Date) {
-                    onDateSelect(formatDate(value));
-                  }
-                }}
-                value={parseDate(selectedDate)}
-                tileContent={tileContent}
-                className="w-100 border-0 responsive-calendar"
+              <CustomCalendar
+                selectedDate={selectedDate}
+                onDateSelect={onDateSelect}
+                spendingsByDate={spendingsByDate}
               />
             </Card.Body>
           </Card>
@@ -173,7 +145,7 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
                     <FaShoppingCart className="me-2 me-lg-3" />
                     Daily Expenses
                   </h4>
-                  <p className="mb-0 mt-1 mt-lg-2 opacity-75 small">{parseDate(selectedDate).toLocaleDateString()}</p>
+                  <p className="mb-0 mt-1 mt-lg-2 opacity-75 small">{parseDateLocal(selectedDate).toLocaleDateString()}</p>
                 </div>
                 <Badge bg="light" text="dark" className="fs-6 px-2 px-sm-3 py-2">
                   Total: ${selectedDateSpendings.reduce((sum, s) => sum + s.amount, 0).toFixed(2)}
@@ -262,7 +234,7 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
                                   {spending.category}
                                 </Badge>
                                 <span className="text-muted small">
-                                  {parseDate(spending.date).toLocaleDateString()}
+                                  {parseDateLocal(spending.date).toLocaleDateString()}
                                 </span>
                               </div>
                               {spending.description && (

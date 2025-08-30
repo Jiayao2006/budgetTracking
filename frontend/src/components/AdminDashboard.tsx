@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Button, Badge, Modal, Form, Alert, Spinner } from 'react-bootstrap';
 import { FaUsers, FaUserPlus, FaEdit, FaTrash, FaEye, FaCrown, FaChartLine } from 'react-icons/fa';
 import { useAuthenticatedFetch } from '../context/AuthContext';
+import { API_BASE } from '../config/api';
 
 interface User {
   id: number;
@@ -24,7 +25,7 @@ interface AdminStats {
 interface UserFormData {
   email: string;
   full_name: string;
-  password: string;
+  password?: string;  // Make password optional
   is_admin: boolean;
   is_active: boolean;
 }
@@ -57,8 +58,8 @@ export const AdminDashboard: React.FC = () => {
     setLoading(true);
     try {
       const [usersResponse, statsResponse] = await Promise.all([
-        authenticatedFetch('http://localhost:8000/api/admin/users'),
-        authenticatedFetch('http://localhost:8000/api/admin/dashboard')
+        authenticatedFetch(`${API_BASE}/api/admin/users`),
+        authenticatedFetch(`${API_BASE}/api/admin/dashboard`)
       ]);
 
       const usersData = await usersResponse.json();
@@ -116,17 +117,17 @@ export const AdminDashboard: React.FC = () => {
       let response;
       
       if (modalType === 'create') {
-        response = await authenticatedFetch('http://localhost:8000/api/admin/users', {
+        response = await authenticatedFetch(`${API_BASE}/api/admin/users`, {
           method: 'POST',
           body: JSON.stringify(formData),
         });
       } else if (modalType === 'edit' && selectedUser) {
-        const updateData = { ...formData };
-        if (!updateData.password) {
+        const updateData: Partial<UserFormData> = { ...formData };
+        if (!updateData.password || updateData.password.trim() === '') {
           delete updateData.password; // Don't send empty password
         }
         
-        response = await authenticatedFetch(`http://localhost:8000/api/admin/users/${selectedUser.id}`, {
+        response = await authenticatedFetch(`${API_BASE}/api/admin/users/${selectedUser.id}`, {
           method: 'PUT',
           body: JSON.stringify(updateData),
         });
@@ -156,7 +157,7 @@ export const AdminDashboard: React.FC = () => {
     }
 
     try {
-      const response = await authenticatedFetch(`http://localhost:8000/api/admin/users/${userId}`, {
+      const response = await authenticatedFetch(`${API_BASE}/api/admin/users/${userId}`, {
         method: 'DELETE',
       });
 

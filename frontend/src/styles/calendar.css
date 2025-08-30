@@ -12,6 +12,8 @@
   display: flex;
   height: 44px;
   margin-bottom: 1em;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .react-calendar__navigation button {
@@ -21,6 +23,9 @@
   font-size: 16px;
   font-weight: 500;
   color: #495057;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .react-calendar__navigation button:enabled:hover,
@@ -34,28 +39,55 @@
   color: #6c757d;
 }
 
+/* Fix weekday alignment */
 .react-calendar__month-view__weekdays {
   text-align: center;
   text-transform: uppercase;
   font-weight: bold;
   font-size: 0.75em;
   color: #6c757d;
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  margin-bottom: 1px;
 }
 
 .react-calendar__month-view__weekdays__weekday {
   padding: 0.5em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+}
+
+/* Ensure Sunday starts first for US calendar */
+.react-calendar__month-view__weekdays__weekday:first-child {
+  color: #dc3545; /* Red color for Sunday */
+}
+
+/* Fix date tiles alignment */
+.react-calendar__month-view__days {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
 }
 
 .react-calendar__tile {
   max-width: 100%;
+  aspect-ratio: 1;
   padding: 10px 6px;
   background: none;
   border: none;
   text-align: center;
   line-height: 16px;
   border-radius: 0.25rem;
-  margin: 1px;
+  margin: 0;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .react-calendar__tile:enabled:hover,
@@ -118,6 +150,7 @@
     padding: 6px 3px;
     font-size: 0.8rem;
     min-height: 40px;
+    aspect-ratio: 1;
   }
   
   .react-calendar__navigation button {
@@ -128,6 +161,12 @@
   .react-calendar__month-view__weekdays__weekday {
     padding: 0.3em;
     font-size: 0.7rem;
+  }
+
+  .react-calendar__month-view__days {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
   }
 }
 
@@ -140,6 +179,7 @@
     padding: 4px 2px;
     font-size: 0.75rem;
     min-height: 35px;
+    aspect-ratio: 1;
   }
   
   .react-calendar__navigation button {
@@ -151,6 +191,12 @@
   .react-calendar__month-view__weekdays__weekday {
     padding: 0.2em;
     font-size: 0.65rem;
+  }
+
+  .react-calendar__month-view__days {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
   }
   
   /* Make spending amount badges smaller on mobile */

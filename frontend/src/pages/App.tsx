@@ -10,6 +10,7 @@ import { SpendingCalendar } from '../components/SpendingCalendar';
 import { useAuthenticatedFetch } from '../context/AuthContext';
 import { DashboardStats, Spending, SpendingCreate } from '../types';
 import { getTodayString } from '../utils/dateUtils';
+import { API_BASE } from '../config/api';
 import '../styles/custom.css';
 
 // Main App Component wrapped in AuthProvider
@@ -37,8 +38,8 @@ const AppContent: React.FC = () => {
     try {
       setLoading(true);
       const [statsResponse, spendingsResponse] = await Promise.all([
-        authenticatedFetch('http://localhost:8000/api/spendings/dashboard'),
-        authenticatedFetch('http://localhost:8000/api/spendings')
+        authenticatedFetch(`${API_BASE}/api/spendings/dashboard`),
+        authenticatedFetch(`${API_BASE}/api/spendings`)
       ]);
       
       const dashboardStats = await statsResponse.json();
@@ -73,14 +74,14 @@ const AppContent: React.FC = () => {
 
   const handleAddSpending = async (spending: SpendingCreate) => {
     try {
-      const response = await authenticatedFetch('http://localhost:8000/api/spendings/', {
+      const response = await authenticatedFetch(`${API_BASE}/api/spendings/`, {
         method: 'POST',
         body: JSON.stringify(spending),
       });
       const newSpending = await response.json();
       setSpendings(prev => [newSpending, ...prev]);
       // Refresh dashboard stats
-      const statsResponse = await authenticatedFetch('http://localhost:8000/api/spendings/dashboard');
+      const statsResponse = await authenticatedFetch(`${API_BASE}/api/spendings/dashboard`);
       const newStats = await statsResponse.json();
       setStats(newStats);
     } catch (error) {
@@ -90,14 +91,14 @@ const AppContent: React.FC = () => {
 
   const handleUpdateSpending = async (id: number, spending: SpendingCreate) => {
     try {
-      const response = await authenticatedFetch(`http://localhost:8000/api/spendings/${id}`, {
+      const response = await authenticatedFetch(`${API_BASE}/api/spendings/${id}`, {
         method: 'PUT',
         body: JSON.stringify(spending),
       });
       const updatedSpending = await response.json();
       setSpendings(prev => prev.map(s => s.id === id ? updatedSpending : s));
       // Refresh dashboard stats
-      const statsResponse = await authenticatedFetch('http://localhost:8000/api/spendings/dashboard');
+      const statsResponse = await authenticatedFetch(`${API_BASE}/api/spendings/dashboard`);
       const newStats = await statsResponse.json();
       setStats(newStats);
     } catch (error) {
@@ -107,12 +108,12 @@ const AppContent: React.FC = () => {
 
   const handleDeleteSpending = async (id: number) => {
     try {
-      await authenticatedFetch(`http://localhost:8000/api/spendings/${id}`, {
+      await authenticatedFetch(`${API_BASE}/api/spendings/${id}`, {
         method: 'DELETE',
       });
       setSpendings(prev => prev.filter(s => s.id !== id));
       // Refresh dashboard stats
-      const statsResponse = await authenticatedFetch('http://localhost:8000/api/spendings/dashboard');
+      const statsResponse = await authenticatedFetch(`${API_BASE}/api/spendings/dashboard`);
       const newStats = await statsResponse.json();
       setStats(newStats);
     } catch (error) {
