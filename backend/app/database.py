@@ -4,7 +4,11 @@ from sqlalchemy.orm import sessionmaker
 from .models import Base
 
 # Support both development (SQLite) and production (PostgreSQL)
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./budget.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Clean up empty or whitespace-only DATABASE_URL
+if not DATABASE_URL or DATABASE_URL.strip() == "":
+    DATABASE_URL = "sqlite:///./budget.db"
 
 # Handle PostgreSQL URL format from cloud providers
 if DATABASE_URL.startswith("postgres://"):
