@@ -150,3 +150,6 @@ Earlier failures came from forcing installation of an explicit `pydantic-core` v
 
 ### Switching to full rebuild
 After first green deploy: change Build Command to `bash build_fullstack.sh` to build the React app during deployment instead of relying on committed static assets.
+
+### Python Version Pin
+Because the Render service root is set to `backend`, a `runtime.txt` is also placed inside `backend/` to force Python 3.11 (the repo root `runtime.txt` is ignored when the service root is a subdirectory). If you still see Python 3.13 in build logs, clear build cache and redeploy, or set an env var `PYTHON_VERSION=3.11.9` / `RENDER_PYTHON_VERSION=3.11.9` (Render may honor either) then redeploy.

@@ -8,6 +8,19 @@ echo "🚀 Starting Render deployment (simplified)..."
 echo "🐍 Python version:"
 python --version
 
+# Guard against unsupported Python versions (e.g., 3.13 not yet supported by SQLAlchemy 2.0.23)
+PYVER=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+case "$PYVER" in
+	3.11|3.10|3.12)
+		echo "✅ Python $PYVER acceptable"
+		;;
+	*)
+		echo "❌ Python $PYVER is not supported for this project yet. Ensure runtime.txt pins 3.11."
+		echo "   Add runtime.txt with 'python-3.11.9' in the service root (backend/) on Render."
+		exit 1
+		;;
+esac
+
 echo "📦 Installing Python dependencies (binary wheels only first pass)..."
 pip install --upgrade pip
 
