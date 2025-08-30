@@ -16,11 +16,21 @@ async def create_spending(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    db_spending = Spending(**spending.dict(), user_id=current_user.id)
-    db.add(db_spending)
-    db.commit()
-    db.refresh(db_spending)
-    return db_spending
+    print(f"[SPENDING] Create spending for user {current_user.id} ({current_user.email})")
+    print(f"[SPENDING] Data: {spending.dict()}")
+    
+    try:
+        db_spending = Spending(**spending.dict(), user_id=current_user.id)
+        db.add(db_spending)
+        db.commit()
+        db.refresh(db_spending)
+        
+        print(f"[SPENDING] Created spending ID {db_spending.id} for user {current_user.id}")
+        return db_spending
+    except Exception as e:
+        print(f"[SPENDING] Error creating spending: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create spending: {str(e)}")
 
 @router.get("", response_model=List[SpendingResponse])
 async def get_spendings(
@@ -29,9 +39,13 @@ async def get_spendings(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    print(f"[SPENDING] Get spendings for user {current_user.id} ({current_user.email})")
+    
     spendings = db.query(Spending).filter(
         Spending.user_id == current_user.id
     ).order_by(desc(Spending.date)).offset(skip).limit(limit).all()
+    
+    print(f"[SPENDING] Found {len(spendings)} spendings for user {current_user.id}")
     return spendings
 
 @router.get("/date/{spending_date}", response_model=List[SpendingResponse])

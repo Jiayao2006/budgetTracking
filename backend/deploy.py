@@ -33,9 +33,41 @@ def deploy_database():
         # Test database connection
         print("🧪 Testing database connection...")
         from sqlalchemy import text
+        from app.database import SessionLocal
+        
         with engine.connect() as conn:
             result = conn.execute(text("SELECT 1"))
             print("✅ Database connection successful!")
+        
+        # Create default admin user
+        print("👑 Creating admin user...")
+        db = SessionLocal()
+        try:
+            from app.models import User
+            from app.auth import get_password_hash
+            
+            # Check if admin already exists
+            existing_admin = db.query(User).filter(User.email == "admin@budgettracker.com").first()
+            if existing_admin:
+                print("✅ Admin user already exists!")
+            else:
+                # Create admin user
+                admin_user = User(
+                    email="admin@budgettracker.com",
+                    full_name="System Administrator", 
+                    hashed_password=get_password_hash("admin123"),
+                    is_admin=True,
+                    is_active=True
+                )
+                
+                db.add(admin_user)
+                db.commit()
+                print("✅ Admin user created: admin@budgettracker.com / admin123")
+        except Exception as admin_error:
+            print(f"⚠️ Admin user creation failed: {admin_error}")
+            db.rollback()
+        finally:
+            db.close()
         
         print("✅ Database deployment completed successfully!")
         

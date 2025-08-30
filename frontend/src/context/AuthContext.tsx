@@ -63,11 +63,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }),
       });
 
-      const responseData = await response.json();
-      console.log(`Login response status: ${response.status}`, responseData);
+      console.log(`Login response status: ${response.status}`);
 
       if (!response.ok) {
-        throw new Error(responseData.detail || `Login failed (${response.status})`);
+        // Only read response once
+        const responseText = await response.text();
+        let errorMessage = `Login failed (${response.status})`;
+        
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.detail || errorMessage;
+        } catch {
+          errorMessage = responseText || errorMessage;
+        }
+        
+        console.log('Login error:', errorMessage);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
