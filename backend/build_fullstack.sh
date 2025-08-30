@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Build script for full-stack Render deployment
+# Build script for full-stacecho "� Moving frontend build to backend static folder..."
+mkdir -p ../backend/static
+cp -r dist/* ../backend/static/ Render deployment
 
 set -o errexit  # Exit on error
 
@@ -23,10 +25,19 @@ python -c "import sqlalchemy; print('SQLAlchemy installed')"
 echo "🗄️ Setting up database tables..."
 python deploy.py
 
-echo "🌐 Installing Node.js..."
-# Install Node.js 18.x
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
+echo "🌐 Installing Node.js without sudo on Render..."
+# Install Node.js using nvm-like approach for Render (no sudo)
+export NODE_VERSION=18.18.2
+export NVM_DIR="$HOME/.nvm"
+mkdir -p $NVM_DIR
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+nvm install $NODE_VERSION
+nvm use $NODE_VERSION
+
+# Print Node.js and npm versions
+echo "Node.js version: $(node -v)"
+echo "npm version: $(npm -v)"
 
 echo "📁 Building frontend..."
 cd ../frontend
