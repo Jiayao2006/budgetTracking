@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import health, spendings
+from .routers import health, spendings, auth, admin
 from .database import create_tables
 
 app = FastAPI(title="Budget Tracking API", version="0.1.0")
@@ -35,6 +35,8 @@ async def startup_event():
     create_tables()
 
 app.include_router(health.router)
+app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(spendings.router, prefix="/api")
 
 @app.get("/")
