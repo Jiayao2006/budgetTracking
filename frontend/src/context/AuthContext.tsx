@@ -50,6 +50,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
     
     try {
+      console.log(`Attempting login with email: ${email} to ${API_BASE}/api/auth/login`);
+      
       const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -61,9 +63,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }),
       });
 
+      const responseData = await response.json();
+      console.log(`Login response status: ${response.status}`, responseData);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Login failed');
+        throw new Error(responseData.detail || `Login failed (${response.status})`);
       }
 
       const data = await response.json();

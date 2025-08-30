@@ -59,33 +59,53 @@ async def login(
     """Login user and return access token. Accepts JSON {email,password} or form-data."""
     body_email = None
     body_password = None
+    client_host = request.client.host if request.client else "unknown"
+    
+    # Try to extract credentials from form or JSON
     if email and password:
         body_email, body_password = email, password
+        print(f"[AUTH] Login attempt from {client_host} using form data for: {body_email}")
     else:
         try:
             data = await request.json()
             body_email = data.get("email")
             body_password = data.get("password")
-        except Exception:
+            print(f"[AUTH] Login attempt from {client_host} using JSON for: {body_email}")
+        except Exception as e:
+            print(f"[AUTH] Failed to parse request body: {e}")
             pass
-    print("[AUTH] /login attempt for", body_email)
+    
     if not body_email or not body_password:
+        print("[AUTH] Missing email or password")
         raise HTTPException(status_code=400, detail="Email and password required")
-    user = authenticate_user(db, body_email, body_password)
-    if not user:
-        print("[AUTH] /login failed for", body_email)
+    
+    # Check if user exists
+    user_exists = db.query(User).filter(User.email == body_email).first() is not None
+    if not user_exists:
+        print(f"[AUTH] Login failed - user not found: {body_email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail=f"User not found: {body_email}",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Try to authenticate
+    user = authenticate_user(db, body_email, body_password)
+    if not user:
+        print(f"[AUTH] Login failed - invalid password for: {body_email}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Generate token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
     
-    print("[AUTH] /login success for", user.email)
+    print(f"[AUTH] Login success for {user.email} (admin: {user.is_admin})")
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=UserResponse)
