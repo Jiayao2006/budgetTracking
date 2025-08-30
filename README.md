@@ -121,3 +121,32 @@ The application is fully responsive and mobile-optimized:
 - Touch-friendly buttons and form controls
 - Optimized calendar component for mobile devices
 - Scrollable content areas for better mobile navigation
+
+## ☁️ Deploying to Render (Updated)
+
+1. Create a new Web Service on Render pointing at this repo.
+2. Service root: set Root Directory to `backend`.
+3. Build Command: `bash build_simple.sh`
+4. Start Command: `python start_fullstack.py` (serves API + static React build if present).
+5. Environment Variables:
+    - `DATABASE_URL` = your Render Postgres URL (ensure it begins with `postgresql://`; replace any `postgres://`).
+    - `JWT_SECRET_KEY` = long random string.
+    - `ALLOWED_ORIGINS` = `*` or a comma-separated list of allowed domains.
+6. First deploy should come up using backend only (static folder already committed). After verifying, you can switch Build Command to `bash build_fullstack.sh` to rebuild the frontend on each deploy.
+
+### Why builds were failing
+Earlier failures came from forcing installation of an explicit `pydantic-core` version whose wheel wasn't available for the Python version on Render, triggering a source (Rust) build which is blocked by the read-only filesystem. Solution:
+* Removed explicit `pydantic-core` pin; rely on `pydantic==2.8.2` which pulls a matching pre-built wheel.
+* Added `runtime.txt` (Python 3.11) to align with available wheels.
+* `build_simple.sh` tries a wheels-only install first and falls back if needed.
+
+### Troubleshooting
+| Symptom | Fix |
+|--------|-----|
+| pydantic-core source compile attempt | Confirm no separate `pydantic-core` pin; Python 3.11; wheels-only step passes |
+| DB connection errors | Trim whitespace in `DATABASE_URL`; ensure correct hostname & credentials |
+| Static files 404 | Ensure `backend/static` contains build output or use `build_fullstack.sh` to generate it |
+| CORS issues | Set `ALLOWED_ORIGINS=*` temporarily, tighten later |
+
+### Switching to full rebuild
+After first green deploy: change Build Command to `bash build_fullstack.sh` to build the React app during deployment instead of relying on committed static assets.

@@ -8,9 +8,14 @@ echo "🚀 Starting Render deployment (simplified)..."
 echo "🐍 Python version:"
 python --version
 
-echo "📦 Installing Python dependencies..."
+echo "📦 Installing Python dependencies (binary wheels only first pass)..."
 pip install --upgrade pip
-pip install --only-binary=all fastapi==0.104.1 uvicorn==0.24.0 sqlalchemy==2.0.23 pydantic==2.4.2 pydantic-core==2.10.1 python-multipart==0.0.6 python-jose[cryptography]==3.3.0 passlib[bcrypt]==1.7.4 bcrypt==4.0.1 python-dotenv==1.0.0 psycopg2-binary==2.9.9 alembic==1.13.0
+
+# Prefer wheels only to avoid building Rust (pydantic-core). If any wheel missing, retry without restriction.
+if ! pip install --only-binary=:all: -r requirements.txt; then
+	echo "⚠️ Some wheels unavailable; retrying allowing source builds for remaining packages..."
+	pip install -r requirements.txt
+fi
 
 echo "📝 Verifying installation..."
 python -c "import fastapi; print('FastAPI OK')"
