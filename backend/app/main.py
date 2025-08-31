@@ -79,12 +79,22 @@ async def schema_diagnostics():
                 user_cols = [r[0] for r in res.fetchall()]
             except Exception:
                 pass
+            
+            # Check for all required columns
+            required_spending_cols = ['original_amount', 'label', 'original_currency', 'display_currency', 'exchange_rate']
+            missing_spending = [col for col in required_spending_cols if col not in spend_cols]
+            
             return {
                 "spendings_columns": spend_cols,
                 "users_columns": user_cols,
                 "needs_original_amount": 'original_amount' not in spend_cols,
                 "needs_label": 'label' not in spend_cols,
-                "needs_preferred_currency": 'preferred_currency' not in user_cols
+                "needs_original_currency": 'original_currency' not in spend_cols,
+                "needs_display_currency": 'display_currency' not in spend_cols,
+                "needs_exchange_rate": 'exchange_rate' not in spend_cols,
+                "needs_preferred_currency": 'preferred_currency' not in user_cols,
+                "missing_spending_columns": missing_spending,
+                "all_required_present": len(missing_spending) == 0 and 'preferred_currency' in user_cols
             }
     except Exception as e:
         return {"error": str(e)}

@@ -13,49 +13,47 @@ from ..services.currency import currency_service
 router = APIRouter(prefix="/spendings", tags=["spendings"])
 
 def ensure_spending_columns(db: Session):
-    """Runtime defensive check: ensure both spendings.label and spendings.original_amount columns exist.
+    """Runtime defensive check: ensure all required spendings columns exist.
     If missing (ProgrammingError on select), attempt to add them and silently continue.
     This is a fallback in case startup healing didn't run before traffic or migration drift.
+    Covers: label, original_amount, original_currency, display_currency, exchange_rate
     """
-    try:
-        # Lightweight probe for label
-        db.execute(text("SELECT label FROM spendings LIMIT 0"))
-    except ProgrammingError as e:
-        msg = str(e).lower()
-        if 'column' in msg and 'label' in msg:
-            print('[SCHEMA][RUNTIME] Detected missing spendings.label column – attempting on-the-fly creation')
-            try:
-                db.execute(text("ALTER TABLE spendings ADD COLUMN label VARCHAR(100)"))
-                db.commit()
-                print('[SCHEMA][RUNTIME] spendings.label column created successfully')
-            except Exception as inner:
-                # Another concurrent request might have created it; ignore duplicate errors
-                print(f"[SCHEMA][RUNTIME] Could not create label column (may already exist): {inner}")
-                db.rollback()
-        else:
-            # Different ProgrammingError; re-raise
-            raise
+    columns_to_check = [
+        ('label', 'VARCHAR(100)', None),
+        ('original_amount', 'DOUBLE PRECISION', 'amount'),  # Default to amount column
+        ('original_currency', 'VARCHAR(3)', "'USD'"),
+        ('display_currency', 'VARCHAR(3)', "'USD'"),
+        ('exchange_rate', 'DOUBLE PRECISION', '1.0')
+    ]
     
-    try:
-        # Lightweight probe for original_amount
-        db.execute(text("SELECT original_amount FROM spendings LIMIT 0"))
-    except ProgrammingError as e:
-        msg = str(e).lower()
-        if 'column' in msg and 'original_amount' in msg:
-            print('[SCHEMA][RUNTIME] Detected missing spendings.original_amount column – attempting on-the-fly creation')
-            try:
-                db.execute(text("ALTER TABLE spendings ADD COLUMN original_amount DOUBLE PRECISION"))
-                db.execute(text("UPDATE spendings SET original_amount = amount WHERE original_amount IS NULL"))
-                # Not setting NOT NULL initially as that can block requests during the update
-                db.commit()
-                print('[SCHEMA][RUNTIME] spendings.original_amount column created and populated successfully')
-            except Exception as inner:
-                # Another concurrent request might have created it; ignore duplicate errors
-                print(f"[SCHEMA][RUNTIME] Could not create/update original_amount column: {inner}")
-                db.rollback()
-        else:
-            # Different ProgrammingError; re-raise
-            raise
+    for col_name, col_type, default_value in columns_to_check:
+        try:
+            # Lightweight probe for each column
+            db.execute(text(f"SELECT {col_name} FROM spendings LIMIT 0"))
+        except ProgrammingError as e:
+            msg = str(e).lower()
+            if 'column' in msg and col_name in msg:
+                print(f'[SCHEMA][RUNTIME] Detected missing spendings.{col_name} column – attempting on-the-fly creation')
+                try:
+                    # Add the column
+                    if default_value:
+                        db.execute(text(f"ALTER TABLE spendings ADD COLUMN {col_name} {col_type} DEFAULT {default_value}"))
+                        if default_value != 'amount':  # For non-amount defaults, update existing rows
+                            db.execute(text(f"UPDATE spendings SET {col_name} = {default_value} WHERE {col_name} IS NULL"))
+                        else:  # For original_amount, copy from amount
+                            db.execute(text(f"UPDATE spendings SET {col_name} = amount WHERE {col_name} IS NULL"))
+                    else:
+                        db.execute(text(f"ALTER TABLE spendings ADD COLUMN {col_name} {col_type}"))
+                    
+                    db.commit()
+                    print(f'[SCHEMA][RUNTIME] spendings.{col_name} column created successfully')
+                except Exception as inner:
+                    # Another concurrent request might have created it; ignore duplicate errors
+                    print(f"[SCHEMA][RUNTIME] Could not create {col_name} column (may already exist): {inner}")
+                    db.rollback()
+            else:
+                # Different ProgrammingError; re-raise
+                raise
 
 @router.post("", response_model=SpendingResponse)
 async def create_spending(

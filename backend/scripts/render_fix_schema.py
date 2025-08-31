@@ -73,21 +73,35 @@ def fix_schema():
                 spend_cols = {c['name'] for c in inspector.get_columns('spendings')}
                 print(f"[SCHEMA] Spending columns: {spend_cols}")
                 
-                # Fix original_amount
-                if 'original_amount' not in spend_cols:
-                    print("[SCHEMA][FIX] Adding spendings.original_amount column")
-                    conn.execute(text("ALTER TABLE spendings ADD COLUMN original_amount DOUBLE PRECISION"))
-                    conn.execute(text("UPDATE spendings SET original_amount = amount WHERE original_amount IS NULL"))
-                    try:
-                        conn.execute(text("ALTER TABLE spendings ALTER COLUMN original_amount SET NOT NULL"))
-                        print("[SCHEMA][FIX] Set original_amount NOT NULL")
-                    except Exception as e:
-                        print(f"[SCHEMA][WARN] Could not set NOT NULL on original_amount: {e}")
+                # Define all required columns with their SQL types and defaults
+                required_columns = [
+                    ('original_amount', 'DOUBLE PRECISION', 'amount'),  # Copy from amount
+                    ('label', 'VARCHAR(100)', None),  # Nullable
+                    ('original_currency', 'VARCHAR(3)', "'USD'"),
+                    ('display_currency', 'VARCHAR(3)', "'USD'"),
+                    ('exchange_rate', 'DOUBLE PRECISION', '1.0')
+                ]
                 
-                # Fix label column
-                if 'label' not in spend_cols:
-                    print("[SCHEMA][FIX] Adding spendings.label column")
-                    conn.execute(text("ALTER TABLE spendings ADD COLUMN label VARCHAR(100)"))
+                for col_name, col_type, default_value in required_columns:
+                    if col_name not in spend_cols:
+                        print(f"[SCHEMA][FIX] Adding spendings.{col_name} column")
+                        
+                        if default_value == 'amount':
+                            # Special case for original_amount - copy from existing amount column
+                            conn.execute(text(f"ALTER TABLE spendings ADD COLUMN {col_name} {col_type}"))
+                            conn.execute(text(f"UPDATE spendings SET {col_name} = amount WHERE {col_name} IS NULL"))
+                            try:
+                                conn.execute(text(f"ALTER TABLE spendings ALTER COLUMN {col_name} SET NOT NULL"))
+                                print(f"[SCHEMA][FIX] Set {col_name} NOT NULL")
+                            except Exception as e:
+                                print(f"[SCHEMA][WARN] Could not set NOT NULL on {col_name}: {e}")
+                        elif default_value:
+                            # Other columns with default values
+                            conn.execute(text(f"ALTER TABLE spendings ADD COLUMN {col_name} {col_type} DEFAULT {default_value}"))
+                            conn.execute(text(f"UPDATE spendings SET {col_name} = {default_value} WHERE {col_name} IS NULL"))
+                        else:
+                            # Nullable columns (like label)
+                            conn.execute(text(f"ALTER TABLE spendings ADD COLUMN {col_name} {col_type}"))
             else:
                 print("[SCHEMA][ERROR] No spendings table found!")
                 
@@ -112,12 +126,17 @@ def fix_schema():
                 user_cols = {c['name'] for c in inspector.get_columns('users')}
                 
                 # Check for required columns
+                required_spending = ['original_amount', 'label', 'original_currency', 'display_currency', 'exchange_rate']
                 missing = []
+                
                 if 'spendings' in tables:
-                    if 'original_amount' not in spend_cols: missing.append('spendings.original_amount')
-                    if 'label' not in spend_cols: missing.append('spendings.label')
+                    for col in required_spending:
+                        if col not in spend_cols:
+                            missing.append(f'spendings.{col}')
+                            
                 if 'users' in tables:    
-                    if 'preferred_currency' not in user_cols: missing.append('users.preferred_currency')
+                    if 'preferred_currency' not in user_cols:
+                        missing.append('users.preferred_currency')
                 
                 if missing:
                     print(f"[SCHEMA][VALIDATION] Still missing columns: {missing}")
