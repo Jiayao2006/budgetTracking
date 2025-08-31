@@ -8,6 +8,7 @@ export interface Spending {
   category: string;
   location: string;
   description?: string;
+  label?: string;  // Custom label for grouping
   date: string;
 }
 
@@ -17,6 +18,7 @@ export interface SpendingCreate {
   category: string;
   location: string;
   description?: string;
+  label?: string;  // Custom label for grouping
   date: string;
 }
 
@@ -46,4 +48,53 @@ export interface DashboardStats {
   recent_spendings: Spending[];
   weekly_trend: { date: string; amount: number }[];
   category_distribution: { category: string; amount: number }[];
+}
+
+// Label Analytics Types
+export interface LabelStats {
+  label: string;
+  total_spending: number;
+  transaction_count: number;
+  average_per_transaction: number;
+  highest_spending_date: string;
+  highest_spending_amount: number;
+  first_transaction_date: string;
+  last_transaction_date: string;
+  top_categories: { category: string; amount: number }[];
+  currency: string;
+}
+
+export interface LabelsOverview {
+  total_labels: number;
+  labels_stats: LabelStats[];
+}
+
+// Budget Types
+export interface Budget {
+  id: number;
+  budget_type: string;
+  amount: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BudgetCreate {
+  budget_type: string;
+  amount: number;
+}
+
+export interface BudgetInfo {
+  type: string;
+  total_budget?: number;
+  spent_so_far?: number;
+  budget_remaining?: number;
+  percentage_used?: number;
+  is_over_budget?: boolean;
+  recommended_daily?: number;
+  adjusted_daily?: number;
+  daily_budget?: number;
+  today_spending?: number;
+  budget_remaining_today?: number;
+  percentage_used_today?: number;
+  is_over_budget_today?: boolean;
 }

@@ -8,6 +8,7 @@ import { Dashboard } from '../components/Dashboard';
 import { SpendingForm } from '../components/SpendingForm';
 import { SpendingCalendar } from '../components/SpendingCalendar';
 import { CurrencySettings } from '../components/CurrencySettings';
+import { Labels } from '../components/Labels';
 import { useAuthenticatedFetch } from '../context/AuthContext';
 import { DashboardStats, Spending, SpendingCreate } from '../types';
 import { getTodayString } from '../utils/dateUtils';
@@ -274,6 +275,10 @@ const AppContent: React.FC = () => {
 
       {currentPage === 'admin' && user?.is_admin && (
         <AdminDashboard />
+      )}
+
+      {currentPage === 'labels' && (
+        <Labels />
       )}
 
       {currentPage === 'settings' && (

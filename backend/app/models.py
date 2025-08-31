@@ -34,6 +34,7 @@ class Spending(Base):
     category = Column(String(100), nullable=False)
     location = Column(String(200), nullable=False)
     description = Column(Text)
+    label = Column(String(100), nullable=True)  # Custom label for grouping spendings
     date = Column(Date, nullable=False, default=date.today)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

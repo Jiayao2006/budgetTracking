@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navbar, Nav, NavDropdown, Container, Badge } from 'react-bootstrap';
-import { FaUser, FaSignOutAlt, FaCrown, FaCalendarAlt, FaChartBar, FaCog } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaCrown, FaCalendarAlt, FaChartBar, FaCog, FaTags } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 
 interface NavigationProps {
@@ -47,6 +47,18 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChang
             >
               <FaCalendarAlt className="me-1" />
               Calendar
+            </Nav.Link>
+
+            <Nav.Link
+              href="#"
+              className={`text-white ${currentPage === 'labels' ? 'fw-bold' : ''}`}
+              onClick={(e) => {
+                e.preventDefault();
+                onPageChange('labels');
+              }}
+            >
+              <FaTags className="me-1" />
+              Labels
             </Nav.Link>
 
             <Nav.Link

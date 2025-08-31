@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Form, Button, Row, Col } from 'react-bootstrap';
 import { FaPlus } from 'react-icons/fa';
 import { SpendingCreate } from '../types';
@@ -21,8 +21,37 @@ export const SpendingForm: React.FC<SpendingFormProps> = ({ onSubmit }) => {
     category: 'Food',
     location: '',
     description: '',
+    label: '',
     date: getTodayString()
   });
+  
+  const [existingLabels, setExistingLabels] = useState<string[]>([]);
+  const [isCustomLabel, setIsCustomLabel] = useState(false);
+
+  useEffect(() => {
+    fetchExistingLabels();
+  }, []);
+
+  const fetchExistingLabels = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch('/api/labels/list', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const labels: string[] = await response.json();
+        setExistingLabels(labels);
+      }
+    } catch (error) {
+      console.error('Error fetching existing labels:', error);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,8 +63,11 @@ export const SpendingForm: React.FC<SpendingFormProps> = ({ onSubmit }) => {
         category: 'Food',
         location: '',
         description: '',
+        label: '',
         date: getTodayString()
       });
+      setIsCustomLabel(false);
+      fetchExistingLabels(); // Refresh labels list
     }
   };
 
@@ -124,6 +156,52 @@ export const SpendingForm: React.FC<SpendingFormProps> = ({ onSubmit }) => {
               </Form.Group>
             </Col>
           </Row>
+
+          <Form.Group className="mb-3 mb-lg-4">
+            <Form.Label className="fw-bold text-dark mb-2">Label (Optional)</Form.Label>
+            <Row>
+              <Col md={6}>
+                <Form.Select
+                  value={isCustomLabel ? 'custom' : form.label || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === 'custom') {
+                      setIsCustomLabel(true);
+                      setForm({...form, label: ''});
+                    } else {
+                      setIsCustomLabel(false);
+                      setForm({...form, label: value});
+                    }
+                  }}
+                  className="border-2"
+                  style={{ borderColor: '#e9ecef' }}
+                >
+                  <option value="">No label</option>
+                  {existingLabels.map((label) => (
+                    <option key={label} value={label}>
+                      {label}
+                    </option>
+                  ))}
+                  <option value="custom">+ Create new label</option>
+                </Form.Select>
+              </Col>
+              {isCustomLabel && (
+                <Col md={6}>
+                  <Form.Control
+                    type="text"
+                    value={form.label}
+                    onChange={(e) => setForm({...form, label: e.target.value})}
+                    placeholder="Enter new label name"
+                    className="border-2"
+                    style={{ borderColor: '#e9ecef' }}
+                  />
+                </Col>
+              )}
+            </Row>
+            <Form.Text className="text-muted">
+              Select an existing label or create a new one to categorize this spending
+            </Form.Text>
+          </Form.Group>
 
           <Form.Group className="mb-3 mb-lg-4">
             <Form.Label className="fw-bold text-dark mb-2">Description (Optional)</Form.Label>

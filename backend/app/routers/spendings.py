@@ -53,6 +53,7 @@ async def create_spending(
             category=spending.category,
             location=spending.location,
             description=spending.description,
+            label=spending.label,  # Add label field here
             date=spending.date,
             user_id=current_user.id
         )

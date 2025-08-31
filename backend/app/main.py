@@ -2,7 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import health, spendings, auth, admin, currency, users
+from .routers import health, spendings, auth, admin, currency, users, labels
 from .database import create_tables
 from .static import setup_static_files
 
@@ -53,6 +53,7 @@ app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(currency.router)
 app.include_router(users.router, prefix="/api")
 app.include_router(spendings.router, prefix="/api")
+app.include_router(labels.router)
 
 # API health endpoints
 @app.get("/api/health")

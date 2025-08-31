@@ -45,6 +45,7 @@ class SpendingCreate(BaseModel):
     category: str
     location: str
     description: Optional[str] = None
+    label: Optional[str] = None  # Custom label for grouping
     date: date
 
 class SpendingResponse(BaseModel):
@@ -57,6 +58,7 @@ class SpendingResponse(BaseModel):
     category: str
     location: str
     description: Optional[str]
+    label: Optional[str]  # Custom label for grouping
     date: date
     user_id: int
     
@@ -100,3 +102,20 @@ class CurrencyConversion(BaseModel):
     target_currency: str
     converted_amount: float
     exchange_rate: float
+
+# Label Analytics Schemas
+class LabelStats(BaseModel):
+    label: str
+    total_spending: float
+    transaction_count: int
+    average_per_transaction: float
+    highest_spending_date: Optional[date]
+    highest_spending_amount: float
+    first_transaction_date: date
+    last_transaction_date: date
+    top_categories: list[dict]
+    currency: str
+
+class LabelsOverview(BaseModel):
+    total_labels: int
+    labels_stats: list[LabelStats]
