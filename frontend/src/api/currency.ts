@@ -1,10 +1,9 @@
 import axios from 'axios';
 import { Currency } from '../types';
-
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
+import { API_BASE } from '../config/api';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE,
 });
 
 // Add token to requests
