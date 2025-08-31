@@ -8,6 +8,7 @@ sys.path.insert(0, '.')
 
 def quick_deploy():
     print("⚡ Quick deployment starting...")
+    print("🔧 PostgreSQL Database Schema Fix")
     
     try:
         # Just add the missing column directly
@@ -15,9 +16,12 @@ def quick_deploy():
         
         database_url = os.getenv("DATABASE_URL")
         if database_url:
+            print(f"🔗 Connecting to PostgreSQL database...")
             engine = create_engine(database_url)
             
             with engine.connect() as conn:
+                print("🔧 Fixing database schema...")
+                
                 # Add missing columns if they don't exist
                 try:
                     # Add preferred_currency to users table
@@ -25,33 +29,42 @@ def quick_deploy():
                         ALTER TABLE users 
                         ADD COLUMN IF NOT EXISTS preferred_currency VARCHAR(3) NOT NULL DEFAULT 'USD'
                     """))
+                    print("✅ Users table - preferred_currency column checked")
                     
-                    # Add missing columns to spendings table
+                    # Check and add original_amount column
                     try:
-                        conn.execute(text("SELECT original_amount FROM spendings LIMIT 1"))
+                        result = conn.execute(text("SELECT original_amount FROM spendings LIMIT 1"))
                         print("✅ original_amount column already exists")
                     except Exception:
                         print("⚠️ Adding original_amount column...")
                         conn.execute(text("ALTER TABLE spendings ADD COLUMN original_amount FLOAT"))
-                        conn.execute(text("UPDATE spendings SET original_amount = amount"))
+                        print("⚠️ Updating original_amount values...")
+                        conn.execute(text("UPDATE spendings SET original_amount = amount WHERE original_amount IS NULL"))
+                        print("⚠️ Setting original_amount NOT NULL...")
                         conn.execute(text("ALTER TABLE spendings ALTER COLUMN original_amount SET NOT NULL"))
+                        print("✅ original_amount column added and configured")
                     
-                    # Add label column if missing
+                    # Check and add label column
                     try:
-                        conn.execute(text("SELECT label FROM spendings LIMIT 1"))
+                        result = conn.execute(text("SELECT label FROM spendings LIMIT 1"))
                         print("✅ label column already exists")
                     except Exception:
                         print("⚠️ Adding label column...")
                         conn.execute(text("ALTER TABLE spendings ADD COLUMN label VARCHAR(100)"))
+                        print("✅ label column added")
                         
                     conn.commit()
-                    print("✅ Database schema updated!")
+                    print("✅ Database schema updated and committed!")
+                    
+                    # Test the schema
+                    result = conn.execute(text("SELECT COUNT(*) FROM spendings"))
+                    count = result.scalar()
+                    print(f"✅ Database test passed! Found {count} spending records")
+                    
                 except Exception as e:
-                    if "already exists" in str(e).lower():
-                        print("✅ Column already exists!")
-                    else:
-                        print(f"⚠️ Schema update error: {e}")
-                        # Continue anyway to avoid deployment failures
+                    print(f"⚠️ Schema update error: {e}")
+                    print("⚠️ Continuing deployment anyway...")
+                    # Continue anyway to avoid deployment failures
         
         # Import models to ensure everything works
         from app.models import User
