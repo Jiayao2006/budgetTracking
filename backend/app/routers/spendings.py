@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, text
+from sqlalchemy.exc import ProgrammingError
 from datetime import date, timedelta
 from typing import List
 from ..database import get_db
@@ -11,6 +12,51 @@ from ..services.currency import currency_service
 
 router = APIRouter(prefix="/spendings", tags=["spendings"])
 
+def ensure_spending_columns(db: Session):
+    """Runtime defensive check: ensure both spendings.label and spendings.original_amount columns exist.
+    If missing (ProgrammingError on select), attempt to add them and silently continue.
+    This is a fallback in case startup healing didn't run before traffic or migration drift.
+    """
+    try:
+        # Lightweight probe for label
+        db.execute(text("SELECT label FROM spendings LIMIT 0"))
+    except ProgrammingError as e:
+        msg = str(e).lower()
+        if 'column' in msg and 'label' in msg:
+            print('[SCHEMA][RUNTIME] Detected missing spendings.label column – attempting on-the-fly creation')
+            try:
+                db.execute(text("ALTER TABLE spendings ADD COLUMN label VARCHAR(100)"))
+                db.commit()
+                print('[SCHEMA][RUNTIME] spendings.label column created successfully')
+            except Exception as inner:
+                # Another concurrent request might have created it; ignore duplicate errors
+                print(f"[SCHEMA][RUNTIME] Could not create label column (may already exist): {inner}")
+                db.rollback()
+        else:
+            # Different ProgrammingError; re-raise
+            raise
+    
+    try:
+        # Lightweight probe for original_amount
+        db.execute(text("SELECT original_amount FROM spendings LIMIT 0"))
+    except ProgrammingError as e:
+        msg = str(e).lower()
+        if 'column' in msg and 'original_amount' in msg:
+            print('[SCHEMA][RUNTIME] Detected missing spendings.original_amount column – attempting on-the-fly creation')
+            try:
+                db.execute(text("ALTER TABLE spendings ADD COLUMN original_amount DOUBLE PRECISION"))
+                db.execute(text("UPDATE spendings SET original_amount = amount WHERE original_amount IS NULL"))
+                # Not setting NOT NULL initially as that can block requests during the update
+                db.commit()
+                print('[SCHEMA][RUNTIME] spendings.original_amount column created and populated successfully')
+            except Exception as inner:
+                # Another concurrent request might have created it; ignore duplicate errors
+                print(f"[SCHEMA][RUNTIME] Could not create/update original_amount column: {inner}")
+                db.rollback()
+        else:
+            # Different ProgrammingError; re-raise
+            raise
+
 @router.post("", response_model=SpendingResponse)
 async def create_spending(
     spending: SpendingCreate, 
@@ -19,6 +65,9 @@ async def create_spending(
 ):
     print(f"[SPENDING] Create spending for user {current_user.id} ({current_user.email})")
     print(f"[SPENDING] Data: {spending.dict()}")
+    
+    # Ensure required columns exist
+    ensure_spending_columns(db)
     
     try:
         # Get user's preferred currency
@@ -78,6 +127,9 @@ async def get_spendings(
 ):
     print(f"[SPENDING] Get spendings for user {current_user.id} ({current_user.email})")
     
+    # Ensure required columns exist
+    ensure_spending_columns(db)
+    
     spendings = db.query(Spending).filter(
         Spending.user_id == current_user.id
     ).order_by(desc(Spending.date)).offset(skip).limit(limit).all()
@@ -91,6 +143,9 @@ async def get_spendings_by_date(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    # Ensure required columns exist
+    ensure_spending_columns(db)
+    
     spendings = db.query(Spending).filter(
         Spending.date == spending_date,
         Spending.user_id == current_user.id
@@ -104,6 +159,9 @@ async def update_spending(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    # Ensure required columns exist
+    ensure_spending_columns(db)
+    
     db_spending = db.query(Spending).filter(
         Spending.id == spending_id,
         Spending.user_id == current_user.id
@@ -124,6 +182,9 @@ async def delete_spending(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    # Ensure required columns exist
+    ensure_spending_columns(db)
+    
     db_spending = db.query(Spending).filter(
         Spending.id == spending_id,
         Spending.user_id == current_user.id
@@ -142,6 +203,9 @@ async def convert_all_spendings_currency(
     current_user: User = Depends(get_current_user)
 ):
     """Convert all user's spendings to a new display currency"""
+    # Ensure required columns exist
+    ensure_spending_columns(db)
+    
     target_currency = target_currency.upper()
     
     # Update user's preferred currency
@@ -180,6 +244,9 @@ def get_dashboard_stats(
 ):
     """Get spending dashboard statistics for current user"""
     print(f"[DASHBOARD] Getting stats for user {current_user.id} ({current_user.email})")
+    
+    # Ensure required columns exist
+    ensure_spending_columns(db)
     
     today = date.today()
     first_day_month = today.replace(day=1)

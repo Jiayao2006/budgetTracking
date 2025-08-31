@@ -3,19 +3,19 @@
 If you see 500 errors complaining about `spendings.label` or `spendings.original_amount` or `users.preferred_currency` missing in production (Render), the app now attempts automatic healing at startup. If that fails (e.g., the first request hits before startup completes), you can manually trigger the same logic:
 
 1. Open a shell in your Render service.
-2. Run:
-    ```bash
-    python scripts/run_schema_heal.py
-    ```
-3. Check the output for `[SCHEMA][MANUAL] All target columns present.`
+2. Run either of these scripts (the second one is more comprehensive):
+   ```bash
+   python scripts/run_schema_heal.py
+   # OR 
+   python scripts/render_fix_schema.py  # More robust fix specifically for Render
+   ```
+3. Check the output for `[SCHEMA][MANUAL] All target columns present.` or `[SCHEMA][VALIDATION] All required columns exist!`
 4. Optionally call the diagnostics endpoint from your browser or curl:
-    ```bash
-    curl -s https://your-domain/api/diagnostics/schema | jq
-    ```
+   ```bash
+   curl -s https://your-domain/api/diagnostics/schema | jq
+   ```
 
-The labels endpoints also contain a lightweight runtime guard that will create `spendings.label` on first access if it is still missing.
-
-# Budget Tracking Application
+Both the labels endpoints and spendings endpoints now contain a lightweight runtime guard that will automatically create missing columns (`spendings.label` and `spendings.original_amount`) on first access if they are still missing.# Budget Tracking Application
 
 A responsive, mobile-friendly budget tracking web application with dashboard analytics, spending management, and interactive calendar.
 
