@@ -20,6 +20,6 @@ python -c "import uvicorn; print('Uvicorn: OK')"
 python -c "import sqlalchemy; print(f'SQLAlchemy: {sqlalchemy.__version__}')"
 
 echo "🗄️ Setting up database tables..."
-python deploy.py
+python quick_deploy.py
 
 echo "✅ Deployment preparation complete!"
