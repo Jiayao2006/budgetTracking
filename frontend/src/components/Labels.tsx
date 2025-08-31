@@ -254,19 +254,19 @@ export const Labels: React.FC = () => {
                 <div className="mb-3">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <span className="text-muted small">Total Spending</span>
-                    <span className="fw-bold text-dark">
+                    <span className="fw-bold text-secondary">
                       {formatCurrency(label.total_spending, preferredCurrency)}
                     </span>
                   </div>
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <span className="text-muted small">Average</span>
-                    <span className="text-dark">
+                    <span className="text-secondary">
                       {formatCurrency(label.average_per_transaction, preferredCurrency)}
                     </span>
                   </div>
                   <div className="d-flex justify-content-between align-items-center">
                     <span className="text-muted small">Highest Spend</span>
-                    <span className="text-dark">
+                    <span className="text-secondary">
                       {formatCurrency(label.highest_spending_amount, preferredCurrency)}
                     </span>
                   </div>
@@ -340,6 +340,24 @@ export const Labels: React.FC = () => {
                     {selectedLabel.highest_spending_date && (
                       <small className="text-muted">
                         on {new Date(selectedLabel.highest_spending_date).toLocaleDateString()}
+                      </small>
+                    )}
+                  </Card.Body>
+                </Card>
+              </Col>
+              <Col md={6} className="mb-3">
+                <Card className="border-0 bg-light">
+                  <Card.Body className="text-center">
+                    <FaTag className="text-danger mb-2" size={24} />
+                    <h6 className="mb-1">Top Category</h6>
+                    <h4 className="text-danger mb-0">
+                      {selectedLabel.top_categories && selectedLabel.top_categories.length > 0 
+                        ? selectedLabel.top_categories[0].category 
+                        : 'N/A'}
+                    </h4>
+                    {selectedLabel.top_categories && selectedLabel.top_categories.length > 0 && (
+                      <small className="text-muted">
+                        {formatCurrency(selectedLabel.top_categories[0].amount, preferredCurrency)} spent
                       </small>
                     )}
                   </Card.Body>

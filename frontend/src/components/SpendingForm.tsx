@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Button, Row, Col } from 'react-bootstrap';
-import { FaPlus } from 'react-icons/fa';
+import { Card, Form, Button, Row, Col, InputGroup } from 'react-bootstrap';
+import { FaPlus, FaMoneyBillWave, FaCalendarAlt, FaShoppingBag, FaMapMarkerAlt, FaTag, FaFileAlt } from 'react-icons/fa';
 import { SpendingCreate } from '../types';
 import { getTodayString } from '../utils/dateUtils';
 import { CurrencySelector } from './CurrencySelector';
@@ -72,66 +72,82 @@ export const SpendingForm: React.FC<SpendingFormProps> = ({ onSubmit }) => {
   };
 
   return (
-    <Card className="border-0 shadow-lg" style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' }}>
-      <Card.Header className="border-0 text-white py-3 py-lg-4">
-        <h4 className="mb-0 fw-bold">
-          <FaPlus className="me-2 me-lg-3" />
+    <Card className="border-0 shadow-lg rounded-4 overflow-hidden" style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' }}>
+      <Card.Header className="border-0 text-white py-4">
+        <h4 className="mb-0 fw-bold d-flex align-items-center">
+          <FaPlus className="me-3" />
           Add New Spending
         </h4>
-        <p className="mb-0 mt-1 mt-lg-2 opacity-75 small">Track your expenses and stay within budget</p>
+        <p className="mb-0 mt-2 opacity-75 small">Track your expenses and stay within budget</p>
       </Card.Header>
-      <Card.Body className="p-3 p-lg-5 bg-white rounded-bottom">
+      <Card.Body className="p-4 p-lg-5 bg-white rounded-bottom">
         <Form onSubmit={handleSubmit}>
-          <Row>
-            <Col lg={4} xs={12}>
-              <Form.Group className="mb-3 mb-lg-4">
-                <Form.Label className="fw-bold text-dark mb-2">Amount</Form.Label>
-                <Form.Control
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.amount || ''}
-                  onChange={(e) => setForm({...form, amount: parseFloat(e.target.value) || 0})}
-                  required
-                  size="lg"
-                  className="border-2"
-                  style={{ borderColor: '#e9ecef' }}
-                />
+          <Row className="g-4">
+            <Col lg={4} md={6} xs={12}>
+              <Form.Group>
+                <Form.Label className="fw-bold text-secondary mb-2 d-flex align-items-center">
+                  <FaMoneyBillWave className="text-primary me-2" />
+                  Amount
+                </Form.Label>
+                <InputGroup>
+                  <Form.Control
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.amount || ''}
+                    onChange={(e) => setForm({...form, amount: parseFloat(e.target.value) || 0})}
+                    required
+                    placeholder="0.00"
+                    className="shadow-sm border-2"
+                    style={{ borderColor: '#e9ecef', borderRight: 'none' }}
+                  />
+                  <InputGroup.Text className="bg-white border-2" style={{ borderColor: '#e9ecef', borderLeft: 'none' }}>
+                    {form.original_currency}
+                  </InputGroup.Text>
+                </InputGroup>
               </Form.Group>
             </Col>
-            <Col lg={4} xs={12}>
+            <Col lg={4} md={6} xs={12}>
               <CurrencySelector
                 value={form.original_currency || 'USD'}
                 onChange={(currency) => setForm({...form, original_currency: currency})}
-                label="Input Currency"
-                size="lg"
+                label={
+                  <span className="d-flex align-items-center">
+                    <FaMoneyBillWave className="text-primary me-2" />
+                    Input Currency
+                  </span>
+                }
               />
             </Col>
-            <Col lg={4} xs={12}>
-              <Form.Group className="mb-3 mb-lg-4">
-                <Form.Label className="fw-bold text-dark mb-2">Date</Form.Label>
+            <Col lg={4} md={6} xs={12}>
+              <Form.Group>
+                <Form.Label className="fw-bold text-secondary mb-2 d-flex align-items-center">
+                  <FaCalendarAlt className="text-primary me-2" />
+                  Date
+                </Form.Label>
                 <Form.Control
                   type="date"
                   value={form.date}
                   onChange={(e) => setForm({...form, date: e.target.value})}
                   required
-                  size="lg"
-                  className="border-2"
+                  className="shadow-sm border-2"
                   style={{ borderColor: '#e9ecef' }}
                 />
               </Form.Group>
             </Col>
           </Row>
 
-          <Row>
-            <Col lg={6} xs={12}>
-              <Form.Group className="mb-3 mb-lg-4">
-                <Form.Label className="fw-bold text-dark mb-2">Category</Form.Label>
+          <Row className="g-4 mt-2">
+            <Col lg={6} md={6} xs={12}>
+              <Form.Group>
+                <Form.Label className="fw-bold text-secondary mb-2 d-flex align-items-center">
+                  <FaShoppingBag className="text-primary me-2" />
+                  Category
+                </Form.Label>
                 <Form.Select
                   value={form.category}
                   onChange={(e) => setForm({...form, category: e.target.value})}
-                  size="lg"
-                  className="border-2"
+                  className="shadow-sm border-2"
                   style={{ borderColor: '#e9ecef' }}
                 >
                   {CATEGORIES.map(cat => (
@@ -140,27 +156,32 @@ export const SpendingForm: React.FC<SpendingFormProps> = ({ onSubmit }) => {
                 </Form.Select>
               </Form.Group>
             </Col>
-            <Col lg={6} xs={12}>
-              <Form.Group className="mb-3 mb-lg-4">
-                <Form.Label className="fw-bold text-dark mb-2">Location/Store</Form.Label>
+            <Col lg={6} md={6} xs={12}>
+              <Form.Group>
+                <Form.Label className="fw-bold text-secondary mb-2 d-flex align-items-center">
+                  <FaMapMarkerAlt className="text-primary me-2" />
+                  Location/Store
+                </Form.Label>
                 <Form.Control
                   type="text"
                   value={form.location}
                   onChange={(e) => setForm({...form, location: e.target.value})}
                   placeholder="e.g. Walmart, McDonald's"
                   required
-                  size="lg"
-                  className="border-2"
+                  className="shadow-sm border-2"
                   style={{ borderColor: '#e9ecef' }}
                 />
               </Form.Group>
             </Col>
           </Row>
 
-          <Form.Group className="mb-3 mb-lg-4">
-            <Form.Label className="fw-bold text-dark mb-2">Label (Optional)</Form.Label>
-            <Row>
-              <Col md={6}>
+          <Form.Group className="mt-4">
+            <Form.Label className="fw-bold text-secondary mb-2 d-flex align-items-center">
+              <FaTag className="text-primary me-2" />
+              Label (Optional)
+            </Form.Label>
+            <Row className="g-3">
+              <Col md={isCustomLabel ? 6 : 12}>
                 <Form.Select
                   value={isCustomLabel ? 'custom' : form.label || ''}
                   onChange={(e) => {
@@ -173,7 +194,7 @@ export const SpendingForm: React.FC<SpendingFormProps> = ({ onSubmit }) => {
                       setForm({...form, label: value});
                     }
                   }}
-                  className="border-2"
+                  className="shadow-sm border-2"
                   style={{ borderColor: '#e9ecef' }}
                 >
                   <option value="">No label</option>
@@ -192,35 +213,38 @@ export const SpendingForm: React.FC<SpendingFormProps> = ({ onSubmit }) => {
                     value={form.label}
                     onChange={(e) => setForm({...form, label: e.target.value})}
                     placeholder="Enter new label name"
-                    className="border-2"
+                    className="shadow-sm border-2"
                     style={{ borderColor: '#e9ecef' }}
                   />
                 </Col>
               )}
             </Row>
-            <Form.Text className="text-muted">
+            <Form.Text className="text-muted mt-2 d-block">
               Select an existing label or create a new one to categorize this spending
             </Form.Text>
           </Form.Group>
 
-          <Form.Group className="mb-3 mb-lg-4">
-            <Form.Label className="fw-bold text-dark mb-2">Description (Optional)</Form.Label>
+          <Form.Group className="mt-4">
+            <Form.Label className="fw-bold text-secondary mb-2 d-flex align-items-center">
+              <FaFileAlt className="text-primary me-2" />
+              Description (Optional)
+            </Form.Label>
             <Form.Control
               as="textarea"
               rows={3}
               value={form.description}
               onChange={(e) => setForm({...form, description: e.target.value})}
               placeholder="Add notes about this spending..."
-              className="border-2"
+              className="shadow-sm border-2"
               style={{ borderColor: '#e9ecef' }}
             />
           </Form.Group>
 
-          <div className="d-grid d-lg-flex d-lg-justify-content-end">
+          <div className="d-grid d-md-flex justify-content-md-end mt-4">
             <Button 
               type="submit" 
               size="lg"
-              className="px-4 px-lg-5 py-3 fw-bold"
+              className="px-5 py-3 fw-bold shadow-sm"
               style={{ 
                 background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', 
                 border: 'none',

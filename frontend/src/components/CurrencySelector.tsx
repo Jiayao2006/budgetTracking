@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { Form, Spinner, Alert } from 'react-bootstrap';
 import { Currency } from '../types';
 import { currencyAPI } from '../api/currency';
@@ -6,7 +6,7 @@ import { currencyAPI } from '../api/currency';
 interface CurrencySelectorProps {
   value: string;
   onChange: (currency: string) => void;
-  label?: string;
+  label?: ReactNode;
   size?: 'sm' | 'lg';
   disabled?: boolean;
 }
@@ -49,8 +49,8 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
 
   if (loading) {
     return (
-      <Form.Group className="mb-3">
-        <Form.Label className="fw-bold text-dark mb-2">{label}</Form.Label>
+      <Form.Group>
+        <Form.Label className="fw-bold text-secondary mb-2">{label}</Form.Label>
         <div className="d-flex align-items-center">
           <Spinner animation="border" size="sm" className="me-2" />
           <span>Loading currencies...</span>
@@ -61,8 +61,8 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
 
   if (error) {
     return (
-      <Form.Group className="mb-3">
-        <Form.Label className="fw-bold text-dark mb-2">{label}</Form.Label>
+      <Form.Group>
+        <Form.Label className="fw-bold text-secondary mb-2">{label}</Form.Label>
         <Alert variant="warning" className="p-2 small">
           {error}. Using fallback currencies.
         </Alert>
@@ -71,7 +71,7 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
           onChange={(e) => onChange(e.target.value)}
           size={size}
           disabled={disabled}
-          className="border-2"
+          className="shadow-sm border-2"
           style={{ borderColor: '#e9ecef' }}
         >
           {currencies.map(currency => (
@@ -85,14 +85,14 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
   }
 
   return (
-    <Form.Group className="mb-3 mb-lg-4">
-      <Form.Label className="fw-bold text-dark mb-2">{label}</Form.Label>
+    <Form.Group>
+      <Form.Label className="fw-bold text-secondary mb-2">{label}</Form.Label>
       <Form.Select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         size={size}
         disabled={disabled}
-        className="border-2"
+        className="shadow-sm border-2"
         style={{ borderColor: '#e9ecef' }}
       >
         {currencies.map(currency => (

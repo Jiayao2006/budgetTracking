@@ -349,7 +349,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
                         #{idx + 1}
                       </div>
                       <div className="flex-grow-1">
-                        <div className="fw-bold text-dark">{cat.category}</div>
+                        <div className="fw-bold text-secondary">{cat.category}</div>
                         <div className="text-success fw-bold">{formatCurrency(cat.amount, preferredCurrency)}</div>
                       </div>
                     </div>

@@ -62,7 +62,7 @@ export const CurrencySettings: React.FC = () => {
   return (
     <Card className="border-0 shadow-sm">
       <Card.Header className="bg-light border-0 py-3">
-        <h5 className="mb-0 fw-bold text-dark">
+        <h5 className="mb-0 fw-bold">
           <FaGlobe className="me-2 text-primary" />
           Currency Settings
         </h5>
