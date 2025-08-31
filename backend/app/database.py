@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text, inspect
 from sqlalchemy.orm import sessionmaker
 from .models import Base
 
@@ -51,6 +51,41 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def create_tables():
     Base.metadata.create_all(bind=engine)
+
+def verify_and_heal_schema():
+    """Ensure critical columns exist (idempotent). Used at startup in production.
+    Adds missing columns for spendings.original_amount, spendings.label, users.preferred_currency.
+    Safe to run repeatedly. Logs actions; ignores errors when columns already exist.
+    """
+    if not DATABASE_URL.startswith("postgresql"):
+        # Skip for SQLite dev; tests/migrations cover local.
+        return
+    try:
+        with engine.connect() as conn:
+            inspector = inspect(engine)
+            tables = inspector.get_table_names()
+            if 'spendings' in tables:
+                cols = {c['name'] for c in inspector.get_columns('spendings')}
+                if 'original_amount' not in cols:
+                    print('[SCHEMA] Adding spendings.original_amount')
+                    conn.execute(text("ALTER TABLE spendings ADD COLUMN original_amount DOUBLE PRECISION"))
+                    conn.execute(text("UPDATE spendings SET original_amount = amount WHERE original_amount IS NULL"))
+                    try:
+                        conn.execute(text("ALTER TABLE spendings ALTER COLUMN original_amount SET NOT NULL"))
+                    except Exception as e:
+                        print(f"[SCHEMA] Could not set NOT NULL original_amount: {e}")
+                if 'label' not in cols:
+                    print('[SCHEMA] Adding spendings.label')
+                    conn.execute(text("ALTER TABLE spendings ADD COLUMN label VARCHAR(100)"))
+            if 'users' in tables:
+                ucols = {c['name'] for c in inspector.get_columns('users')}
+                if 'preferred_currency' not in ucols:
+                    print('[SCHEMA] Adding users.preferred_currency')
+                    conn.execute(text("ALTER TABLE users ADD COLUMN preferred_currency VARCHAR(3) NOT NULL DEFAULT 'USD'"))
+            conn.commit()
+    except Exception as e:
+        # Log but do not crash app startup
+        print(f"[SCHEMA] Verification/heal failed: {e}")
 
 def get_db():
     db = SessionLocal()

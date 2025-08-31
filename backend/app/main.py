@@ -3,15 +3,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import health, spendings, auth, admin, currency, users, labels
-from .database import create_tables
+from .database import create_tables, verify_and_heal_schema, engine
+from sqlalchemy import text
 from .static import setup_static_files
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Startup tasks
     create_tables()
+    verify_and_heal_schema()
     yield
-    # Shutdown (if needed)
+    # (No special shutdown needed)
 
 app = FastAPI(title="Budget Tracking Full Stack", version="1.0.0", lifespan=lifespan)
 
@@ -32,6 +34,11 @@ allowed_origins = [
     "http://localhost:5175", "http://127.0.0.1:5175",
     "http://localhost:5176", "http://127.0.0.1:5176"
 ]
+
+# Always allow deployed production domain (Render) if provided
+default_prod_domain = os.getenv("PROD_DOMAIN", "https://budget-tracker-fullstack.onrender.com").strip()
+if default_prod_domain and default_prod_domain not in allowed_origins:
+    allowed_origins.append(default_prod_domain)
 
 # Add production origins from environment variable
 production_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
@@ -54,6 +61,33 @@ app.include_router(currency.router)
 app.include_router(users.router, prefix="/api")
 app.include_router(spendings.router, prefix="/api")
 app.include_router(labels.router)
+
+# Lightweight diagnostics (admin use; no sensitive data exposed)
+@app.get("/api/diagnostics/schema")
+async def schema_diagnostics():
+    try:
+        with engine.connect() as conn:
+            spend_cols = []
+            user_cols = []
+            try:
+                res = conn.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name='spendings' ORDER BY column_name"))
+                spend_cols = [r[0] for r in res.fetchall()]
+            except Exception:
+                pass
+            try:
+                res = conn.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name='users' ORDER BY column_name"))
+                user_cols = [r[0] for r in res.fetchall()]
+            except Exception:
+                pass
+            return {
+                "spendings_columns": spend_cols,
+                "users_columns": user_cols,
+                "needs_original_amount": 'original_amount' not in spend_cols,
+                "needs_label": 'label' not in spend_cols,
+                "needs_preferred_currency": 'preferred_currency' not in user_cols
+            }
+    except Exception as e:
+        return {"error": str(e)}
 
 # API health endpoints
 @app.get("/api/health")
