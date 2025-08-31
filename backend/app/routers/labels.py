@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
+from sqlalchemy.exc import ProgrammingError
 from typing import List, Optional
 from datetime import date
 from ..database import get_db
@@ -10,6 +11,30 @@ from ..auth import get_current_user
 from ..services.currency import currency_service
 
 router = APIRouter(prefix="/api/labels", tags=["labels"])
+
+def ensure_label_column(db: Session):
+    """Runtime defensive check: ensure spendings.label column exists.
+    If missing (ProgrammingError on select), attempt to add it and silently continue.
+    This is a fallback in case startup healing didn't run before traffic or migration drift.
+    """
+    try:
+        # Lightweight probe
+        db.execute(text("SELECT label FROM spendings LIMIT 0"))
+    except ProgrammingError as e:
+        msg = str(e).lower()
+        if 'column' in msg and 'label' in msg:
+            print('[SCHEMA][RUNTIME] Detected missing spendings.label column – attempting on-the-fly creation')
+            try:
+                db.execute(text("ALTER TABLE spendings ADD COLUMN label VARCHAR(100)"))
+                db.commit()
+                print('[SCHEMA][RUNTIME] spendings.label column created successfully')
+            except Exception as inner:
+                # Another concurrent request might have created it; ignore duplicate errors
+                print(f"[SCHEMA][RUNTIME] Could not create label column (may already exist): {inner}")
+                db.rollback()
+        else:
+            # Different ProgrammingError; re-raise
+            raise
 
 @router.get("/debug", response_model=dict)
 async def debug_labels(
@@ -50,6 +75,7 @@ async def get_available_labels(
     current_user: User = Depends(get_current_user)
 ):
     """Get list of all unique labels used by the current user"""
+    ensure_label_column(db)
     labels_query = db.query(Spending.label).filter(
         Spending.user_id == current_user.id,
         Spending.label.isnot(None),
@@ -68,6 +94,7 @@ async def get_labels_overview(
     db: Session = Depends(get_db)
 ):
     """Get overview of all labels with statistics"""
+    ensure_label_column(db)
     print(f"[LABELS] Getting labels overview for user {current_user.id} ({current_user.email})")
     
     # First check if there are any spendings with labels for this user
@@ -171,6 +198,7 @@ async def get_label_details(
     db: Session = Depends(get_db)
 ):
     """Get detailed statistics for a specific label"""
+    ensure_label_column(db)
     print(f"[LABELS] Getting details for label '{label_name}' for user {current_user.id}")
     
     # Get all spendings for this label with more reliable matching
