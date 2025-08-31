@@ -71,10 +71,19 @@ const AppContent: React.FC = () => {
   };
 
   useEffect(() => {
-    if (currentPage === 'calendar' && user) {
+    if (user && currentPage === 'calendar') {
+      console.log('User authenticated, loading data for user:', user.email);
       loadData();
     }
-  }, [currentPage, user]);
+  }, [user, currentPage]); // Add user as dependency
+  
+  // Additional effect to ensure we load data immediately when user becomes available
+  useEffect(() => {
+    if (user && currentPage === 'calendar' && (!stats && !loading)) {
+      console.log('User available but no data loaded, triggering load...');
+      loadData();
+    }
+  }, [user]); // Trigger when user changes from null to actual user
 
   // If user is not logged in, show auth page
   if (!user) {
@@ -85,6 +94,23 @@ const AppContent: React.FC = () => {
         loading={authLoading}
         error={authError}
       />
+    );
+  }
+
+  // Show loading while authenticating or when user just logged in but data isn't loaded yet
+  if (authLoading || (user && currentPage === 'calendar' && loading)) {
+    return (
+      <>
+        <Navigation currentPage={currentPage} onPageChange={setCurrentPage} />
+        <Container fluid className="px-4 px-lg-5 pb-5" style={{ background: 'linear-gradient(135deg, #f8f9fc 0%, #e9ecf4 100%)', minHeight: '100vh' }}>
+          <div className="text-center mt-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3">{authLoading ? 'Authenticating...' : 'Loading dashboard...'}</p>
+          </div>
+        </Container>
+      </>
     );
   }
 
@@ -155,22 +181,6 @@ const AppContent: React.FC = () => {
       console.error('Failed to delete spending:', error);
     }
   };
-
-  if (loading && currentPage === 'calendar') {
-    return (
-      <>
-        <Navigation currentPage={currentPage} onPageChange={setCurrentPage} />
-        <Container fluid className="px-4 px-lg-5 pb-5" style={{ background: 'linear-gradient(135deg, #f8f9fc 0%, #e9ecf4 100%)', minHeight: '100vh' }}>
-          <div className="text-center mt-5">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3">Loading dashboard...</p>
-          </div>
-        </Container>
-      </>
-    );
-  }
 
   return (
     <>
