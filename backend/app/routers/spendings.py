@@ -7,6 +7,7 @@ from ..database import get_db
 from ..models import Spending, User
 from ..schemas import SpendingCreate, SpendingResponse, DashboardStats
 from ..auth import get_current_user
+from ..services.currency import currency_service
 
 router = APIRouter(prefix="/spendings", tags=["spendings"])
 
@@ -20,7 +21,42 @@ async def create_spending(
     print(f"[SPENDING] Data: {spending.dict()}")
     
     try:
-        db_spending = Spending(**spending.dict(), user_id=current_user.id)
+        # Get user's preferred currency
+        display_currency = current_user.preferred_currency
+        original_currency = spending.original_currency.upper()
+        original_amount = spending.amount
+        
+        # Convert amount to user's preferred currency if different
+        if original_currency != display_currency:
+            print(f"[SPENDING] Converting {original_amount} {original_currency} to {display_currency}")
+            exchange_rate = await currency_service.get_exchange_rate(original_currency, display_currency)
+            
+            if exchange_rate is None:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Unable to get exchange rate from {original_currency} to {display_currency}"
+                )
+            
+            converted_amount = round(original_amount * exchange_rate, 2)
+            print(f"[SPENDING] Converted amount: {converted_amount} {display_currency} (rate: {exchange_rate})")
+        else:
+            exchange_rate = 1.0
+            converted_amount = original_amount
+        
+        # Create spending with currency information
+        db_spending = Spending(
+            amount=converted_amount,  # Converted amount in display currency
+            original_amount=original_amount,  # Original amount in input currency
+            original_currency=original_currency,
+            display_currency=display_currency,
+            exchange_rate=exchange_rate,
+            category=spending.category,
+            location=spending.location,
+            description=spending.description,
+            date=spending.date,
+            user_id=current_user.id
+        )
+        
         db.add(db_spending)
         db.commit()
         db.refresh(db_spending)
@@ -97,6 +133,44 @@ async def delete_spending(
     db.delete(db_spending)
     db.commit()
     return {"message": "Spending deleted successfully"}
+
+@router.post("/convert-currency/{target_currency}")
+async def convert_all_spendings_currency(
+    target_currency: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Convert all user's spendings to a new display currency"""
+    target_currency = target_currency.upper()
+    
+    # Update user's preferred currency
+    current_user.preferred_currency = target_currency
+    
+    # Get all user's spendings
+    spendings = db.query(Spending).filter(Spending.user_id == current_user.id).all()
+    
+    converted_count = 0
+    for spending in spendings:
+        if spending.display_currency != target_currency:
+            # Convert from original currency to new target currency
+            exchange_rate = await currency_service.get_exchange_rate(
+                spending.original_currency, 
+                target_currency
+            )
+            
+            if exchange_rate is not None:
+                spending.amount = round(spending.original_amount * exchange_rate, 2)
+                spending.display_currency = target_currency
+                spending.exchange_rate = exchange_rate
+                converted_count += 1
+    
+    db.commit()
+    
+    return {
+        "message": f"Converted {converted_count} spendings to {target_currency}",
+        "target_currency": target_currency,
+        "converted_count": converted_count
+    }
 
 @router.get("/dashboard", response_model=DashboardStats)
 def get_dashboard_stats(

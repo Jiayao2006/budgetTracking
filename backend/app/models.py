@@ -15,6 +15,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
+    preferred_currency = Column(String(3), nullable=False, default="USD")  # User's preferred display currency
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -26,6 +27,10 @@ class Spending(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     amount = Column(Float, nullable=False)
+    original_amount = Column(Float, nullable=False)  # Original amount in input currency
+    original_currency = Column(String(3), nullable=False, default="USD")  # ISO currency code
+    display_currency = Column(String(3), nullable=False, default="USD")  # Currency to display in
+    exchange_rate = Column(Float, nullable=False, default=1.0)  # Rate used for conversion
     category = Column(String(100), nullable=False)
     location = Column(String(200), nullable=False)
     description = Column(Text)

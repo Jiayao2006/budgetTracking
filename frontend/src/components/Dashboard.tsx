@@ -3,6 +3,8 @@ import { Row, Col, Card, Container, OverlayTrigger, Tooltip as BSTooltip } from 
 import { FaMoneyBillWave, FaCalendarDay, FaTags, FaChartLine, FaReceipt, FaCrown } from 'react-icons/fa';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { DashboardStats } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { formatCurrency } from '../utils/currencyFormat';
 
 interface DashboardProps {
   stats: DashboardStats | null;
@@ -11,6 +13,9 @@ interface DashboardProps {
 const CHART_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#8b5cf6', '#06b6d4', '#84cc16'];
 
 export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
+  const { user } = useAuth();
+  const preferredCurrency = user?.preferred_currency || 'USD';
+
   if (!stats) {
     return (
       <Container fluid className="py-5">
@@ -48,7 +53,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
                 <FaMoneyBillWave className="mb-3" size={32} />
                 <Card.Title className="h6 mb-2">Monthly Total</Card.Title>
                 <Card.Text className="h4 mb-0 fw-bold">
-                  ${stats?.total_spending?.toFixed(2) || '0.00'}
+                  {formatCurrency(stats?.total_spending || 0, preferredCurrency)}
+                </Card.Text>
+                <Card.Text className="small opacity-75 mb-0">
+                  {preferredCurrency}
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -69,7 +77,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
                 <FaCalendarDay className="mb-3" size={32} />
                 <Card.Title className="h6 mb-2">Daily Average</Card.Title>
                 <Card.Text className="h4 mb-0 fw-bold">
-                  ${stats?.average_daily?.toFixed(2) || '0.00'}
+                  {formatCurrency(stats?.average_daily || 0, preferredCurrency)}
+                </Card.Text>
+                <Card.Text className="small opacity-75 mb-0">
+                  per day in {preferredCurrency}
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -90,7 +101,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
                 <FaChartLine className="mb-3" size={32} />
                 <Card.Title className="h6 mb-2">Weekly Total</Card.Title>
                 <Card.Text className="h4 mb-0 fw-bold">
-                  ${stats?.weekly_spending?.toFixed(2) || '0.00'}
+                  {formatCurrency(stats?.weekly_spending || 0, preferredCurrency)}
+                </Card.Text>
+                <Card.Text className="small opacity-75 mb-0">
+                  this week in {preferredCurrency}
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -132,7 +146,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
                 <FaCrown className="mb-3" size={32} />
                 <Card.Title className="h6 mb-2">Highest Spend</Card.Title>
                 <Card.Text className="h4 mb-0 fw-bold">
-                  ${stats?.highest_single_spending?.toFixed(2) || '0.00'}
+                  {formatCurrency(stats?.highest_single_spending || 0, preferredCurrency)}
+                </Card.Text>
+                <Card.Text className="small opacity-75 mb-0">
+                  single transaction
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -333,7 +350,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats }) => {
                       </div>
                       <div className="flex-grow-1">
                         <div className="fw-bold text-dark">{cat.category}</div>
-                        <div className="text-success fw-bold">${cat.amount.toFixed(2)}</div>
+                        <div className="text-success fw-bold">{formatCurrency(cat.amount, preferredCurrency)}</div>
                       </div>
                     </div>
                   </Col>

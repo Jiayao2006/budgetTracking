@@ -2,7 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import health, spendings, auth, admin
+from .routers import health, spendings, auth, admin, currency, users
 from .database import create_tables
 from .static import setup_static_files
 
@@ -50,6 +50,8 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(currency.router)
+app.include_router(users.router, prefix="/api")
 app.include_router(spendings.router, prefix="/api")
 
 # API health endpoints

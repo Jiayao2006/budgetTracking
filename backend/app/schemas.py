@@ -15,11 +15,13 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     is_active: Optional[bool] = None
     is_admin: Optional[bool] = None
+    preferred_currency: Optional[str] = None
 
 class UserResponse(UserBase):
     id: int
     is_active: bool
     is_admin: bool
+    preferred_currency: str
     created_at: datetime
     
     class Config:
@@ -39,6 +41,7 @@ class TokenData(BaseModel):
 # Spending Schemas
 class SpendingCreate(BaseModel):
     amount: float
+    original_currency: str = "USD"  # Currency of the input amount
     category: str
     location: str
     description: Optional[str] = None
@@ -46,7 +49,11 @@ class SpendingCreate(BaseModel):
 
 class SpendingResponse(BaseModel):
     id: int
-    amount: float
+    amount: float  # Converted amount in display currency
+    original_amount: float  # Original amount in input currency
+    original_currency: str
+    display_currency: str
+    exchange_rate: float
     category: str
     location: str
     description: Optional[str]
@@ -74,3 +81,22 @@ class AdminDashboard(BaseModel):
     active_users: int
     inactive_users: int
     recent_users: list[UserResponse]
+
+# Currency Schemas
+class CurrencyInfo(BaseModel):
+    code: str
+    name: str
+    symbol: str
+
+class ExchangeRate(BaseModel):
+    from_currency: str
+    to_currency: str
+    rate: float
+    date: str
+
+class CurrencyConversion(BaseModel):
+    original_amount: float
+    original_currency: str
+    target_currency: str
+    converted_amount: float
+    exchange_rate: float

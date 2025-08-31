@@ -3,6 +3,7 @@ import { Card, Form, Button, Row, Col } from 'react-bootstrap';
 import { FaPlus } from 'react-icons/fa';
 import { SpendingCreate } from '../types';
 import { getTodayString } from '../utils/dateUtils';
+import { CurrencySelector } from './CurrencySelector';
 
 interface SpendingFormProps {
   onSubmit: (spending: SpendingCreate) => void;
@@ -16,6 +17,7 @@ const CATEGORIES = [
 export const SpendingForm: React.FC<SpendingFormProps> = ({ onSubmit }) => {
   const [form, setForm] = useState<SpendingCreate>({
     amount: 0,
+    original_currency: 'USD',
     category: 'Food',
     location: '',
     description: '',
@@ -28,6 +30,7 @@ export const SpendingForm: React.FC<SpendingFormProps> = ({ onSubmit }) => {
       onSubmit(form);
       setForm({
         amount: 0,
+        original_currency: 'USD',
         category: 'Food',
         location: '',
         description: '',
@@ -48,9 +51,9 @@ export const SpendingForm: React.FC<SpendingFormProps> = ({ onSubmit }) => {
       <Card.Body className="p-3 p-lg-5 bg-white rounded-bottom">
         <Form onSubmit={handleSubmit}>
           <Row>
-            <Col lg={6} xs={12}>
+            <Col lg={4} xs={12}>
               <Form.Group className="mb-3 mb-lg-4">
-                <Form.Label className="fw-bold text-dark mb-2">Amount ($)</Form.Label>
+                <Form.Label className="fw-bold text-dark mb-2">Amount</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.01"
@@ -64,7 +67,15 @@ export const SpendingForm: React.FC<SpendingFormProps> = ({ onSubmit }) => {
                 />
               </Form.Group>
             </Col>
-            <Col lg={6} xs={12}>
+            <Col lg={4} xs={12}>
+              <CurrencySelector
+                value={form.original_currency || 'USD'}
+                onChange={(currency) => setForm({...form, original_currency: currency})}
+                label="Input Currency"
+                size="lg"
+              />
+            </Col>
+            <Col lg={4} xs={12}>
               <Form.Group className="mb-3 mb-lg-4">
                 <Form.Label className="fw-bold text-dark mb-2">Date</Form.Label>
                 <Form.Control

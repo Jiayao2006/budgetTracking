@@ -7,6 +7,7 @@ interface User {
   full_name: string;
   is_admin: boolean;
   is_active: boolean;
+  preferred_currency: string;
 }
 
 interface AuthContextType {
@@ -15,12 +16,15 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => void;
+  updateUser: (updates: Partial<User>) => Promise<void>;
   loading: boolean;
   error: string | null;
   clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export { AuthContext };
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -167,12 +171,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
   };
 
+  const updateUser = async (updates: Partial<User>) => {
+    if (!user || !token) {
+      throw new Error('No user or token available');
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`${API_BASE}/api/users/me`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update user');
+      }
+
+      const updatedUser = await response.json();
+      
+      // Update local storage and state
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update user');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     user,
     token,
     login,
     register,
     logout,
+    updateUser,
     loading,
     error,
     clearError,

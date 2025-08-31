@@ -7,6 +7,7 @@ import { AdminDashboard } from '../components/AdminDashboard';
 import { Dashboard } from '../components/Dashboard';
 import { SpendingForm } from '../components/SpendingForm';
 import { SpendingCalendar } from '../components/SpendingCalendar';
+import { CurrencySettings } from '../components/CurrencySettings';
 import { useAuthenticatedFetch } from '../context/AuthContext';
 import { DashboardStats, Spending, SpendingCreate } from '../types';
 import { getTodayString } from '../utils/dateUtils';
@@ -28,13 +29,16 @@ const AppContent: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [spendings, setSpendings] = useState<Spending[]>([]);
   const [selectedDate, setSelectedDate] = useState(getTodayString());
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState<string>('calendar');
+  const [dataLoaded, setDataLoaded] = useState(false);
   const authenticatedFetch = useAuthenticatedFetch();
 
   // All hooks must be called before any conditional returns
 
   const loadData = async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
       console.log('Loading dashboard data...');
@@ -63,6 +67,7 @@ const AppContent: React.FC = () => {
       
       setStats(dashboardStats);
       setSpendings(allSpendings);
+      setDataLoaded(true);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -71,19 +76,43 @@ const AppContent: React.FC = () => {
   };
 
   useEffect(() => {
-    if (user && currentPage === 'calendar') {
+    if (user && currentPage === 'calendar' && !dataLoaded) {
       console.log('User authenticated, loading data for user:', user.email);
+      console.log('Current loading state:', loading);
+      console.log('Current stats:', stats);
       loadData();
     }
-  }, [user, currentPage]); // Add user as dependency
+  }, [user, currentPage, dataLoaded]);
   
-  // Additional effect to ensure we load data immediately when user becomes available
+  // Ensure users are directed to home page after login/registration
   useEffect(() => {
-    if (user && currentPage === 'calendar' && (!stats && !loading)) {
-      console.log('User available but no data loaded, triggering load...');
-      loadData();
+    if (user) {
+      console.log(`User ${user.email} logged in, redirecting to home page (calendar)`);
+      setCurrentPage('calendar');
+      // Reset data loaded state to ensure fresh data load for new user session
+      setDataLoaded(false);
+    } else {
+      // User logged out, reset all state to initial values
+      console.log('User logged out, resetting application state');
+      setCurrentPage('calendar');
+      setStats(null);
+      setSpendings([]);
+      setDataLoaded(false);
+      setLoading(false);
     }
-  }, [user]); // Trigger when user changes from null to actual user
+  }, [user]);
+  
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log('App state changed:', {
+      user: user?.email || 'none',
+      currentPage,
+      loading,
+      authLoading,
+      hasStats: !!stats,
+      dataLoaded
+    });
+  }, [user, currentPage, loading, authLoading, stats, dataLoaded]);
 
   // If user is not logged in, show auth page
   if (!user) {
@@ -98,7 +127,7 @@ const AppContent: React.FC = () => {
   }
 
   // Show loading while authenticating or when user just logged in but data isn't loaded yet
-  if (authLoading || (user && currentPage === 'calendar' && loading)) {
+  if (authLoading) {
     return (
       <>
         <Navigation currentPage={currentPage} onPageChange={setCurrentPage} />
@@ -107,7 +136,24 @@ const AppContent: React.FC = () => {
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">Loading...</span>
             </div>
-            <p className="mt-3">{authLoading ? 'Authenticating...' : 'Loading dashboard...'}</p>
+            <p className="mt-3">Authenticating...</p>
+          </div>
+        </Container>
+      </>
+    );
+  }
+
+  // Show loading while data is being fetched for calendar page
+  if (user && currentPage === 'calendar' && loading) {
+    return (
+      <>
+        <Navigation currentPage={currentPage} onPageChange={setCurrentPage} />
+        <Container fluid className="px-4 px-lg-5 pb-5" style={{ background: 'linear-gradient(135deg, #f8f9fc 0%, #e9ecf4 100%)', minHeight: '100vh' }}>
+          <div className="text-center mt-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3">Loading dashboard...</p>
           </div>
         </Container>
       </>
@@ -182,34 +228,62 @@ const AppContent: React.FC = () => {
     }
   };
 
+  console.log('AppContent render - About to return JSX:', {
+    user: user?.email || 'none',
+    currentPage,
+    loading,
+    dataLoaded
+  });
+
   return (
     <>
       <Navigation currentPage={currentPage} onPageChange={setCurrentPage} />
       
       {currentPage === 'calendar' && (
-        <Container fluid className="px-4 px-lg-5 pb-5" style={{ background: 'linear-gradient(135deg, #f8f9fc 0%, #e9ecf4 100%)', minHeight: '100vh' }}>
-          <div className="fade-in">
-            <Dashboard stats={stats} />
-          </div>
-          
-          <div className="mb-5 fade-in">
-            <SpendingForm onSubmit={handleAddSpending} />
-          </div>
-          
-          <div className="fade-in">
-            <SpendingCalendar 
-              spendings={spendings}
-              selectedDate={selectedDate}
-              onDateSelect={setSelectedDate}
-              onUpdateSpending={handleUpdateSpending}
-              onDeleteSpending={handleDeleteSpending}
-            />
-          </div>
-        </Container>
+        <div style={{ background: 'linear-gradient(135deg, #f8f9fc 0%, #e9ecf4 100%)', minHeight: '100vh', padding: '1rem 2rem' }}>
+          {loading ? (
+            <div className="text-center py-5">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="mt-3">Loading dashboard data...</p>
+            </div>
+          ) : (
+            <div className="container-fluid">
+              <div style={{ marginBottom: '2rem' }} className="fade-in">
+                <Dashboard stats={stats} />
+              </div>
+              
+              <div style={{ marginBottom: '2rem' }} className="fade-in">
+                <SpendingForm onSubmit={handleAddSpending} />
+              </div>
+              
+              <div className="fade-in">
+                <SpendingCalendar 
+                  spendings={spendings}
+                  selectedDate={selectedDate}
+                  onDateSelect={setSelectedDate}
+                  onUpdateSpending={handleUpdateSpending}
+                  onDeleteSpending={handleDeleteSpending}
+                />
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {currentPage === 'admin' && user?.is_admin && (
         <AdminDashboard />
+      )}
+
+      {currentPage === 'settings' && (
+        <Container className="py-5">
+          <div className="row justify-content-center">
+            <div className="col-md-8 col-lg-6">
+              <CurrencySettings />
+            </div>
+          </div>
+        </Container>
       )}
     </>
   );

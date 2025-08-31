@@ -4,6 +4,8 @@ import { FaEdit, FaTrash, FaSave, FaTimes, FaCalendarAlt, FaShoppingCart, FaCale
 import { Spending, SpendingCreate } from '../types';
 import { formatDateLocal, parseDateLocal } from '../utils/dateUtils';
 import { CustomCalendar } from './CustomCalendar';
+import { useAuth } from '../context/AuthContext';
+import { formatCurrency, formatSpendingAmount } from '../utils/currencyFormat';
 import '../styles/custom-calendar.css';
 
 interface SpendingCalendarProps {
@@ -26,10 +28,13 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
   onUpdateSpending,
   onDeleteSpending
 }) => {
+  const { user } = useAuth();
+  const preferredCurrency = user?.preferred_currency || 'USD';
   const [selectedDateSpendings, setSelectedDateSpendings] = useState<Spending[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<SpendingCreate>({
     amount: 0,
+    original_currency: 'USD',
     category: 'Food',
     location: '',
     description: '',
@@ -53,7 +58,8 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
   const startEdit = (spending: Spending) => {
     setEditingId(spending.id);
     setEditForm({
-      amount: spending.amount,
+      amount: spending.original_amount, // Use original amount for editing
+      original_currency: spending.original_currency,
       category: spending.category,
       location: spending.location,
       description: spending.description || '',
@@ -63,7 +69,7 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditForm({ amount: 0, category: 'Food', location: '', description: '', date: '' });
+    setEditForm({ amount: 0, original_currency: 'USD', category: 'Food', location: '', description: '', date: '' });
   };
 
   const saveEdit = () => {
@@ -148,7 +154,7 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
                   <p className="mb-0 mt-1 mt-lg-2 opacity-75 small">{parseDateLocal(selectedDate).toLocaleDateString()}</p>
                 </div>
                 <Badge bg="light" text="dark" className="fs-6 px-2 px-sm-3 py-2">
-                  Total: ${selectedDateSpendings.reduce((sum, s) => sum + s.amount, 0).toFixed(2)}
+                  Total: {formatCurrency(selectedDateSpendings.reduce((sum, s) => sum + s.amount, 0), preferredCurrency)}
                 </Badge>
               </div>
             </Card.Header>
@@ -242,7 +248,31 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
                               )}
                             </div>
                             <div className="d-flex flex-row flex-sm-column align-items-center align-items-sm-end justify-content-between w-100 w-sm-auto">
-                              <div className="h5 text-danger mb-0 mb-sm-2">${spending.amount.toFixed(2)}</div>
+                              <div className="text-end">
+                                <div className="h5 text-danger mb-0">
+                                  {formatSpendingAmount(
+                                    spending.amount, 
+                                    spending.display_currency, 
+                                    spending.original_amount, 
+                                    spending.original_currency
+                                  ).primary}
+                                </div>
+                                {formatSpendingAmount(
+                                  spending.amount, 
+                                  spending.display_currency, 
+                                  spending.original_amount, 
+                                  spending.original_currency
+                                ).secondary && (
+                                  <div className="small text-muted">
+                                    {formatSpendingAmount(
+                                      spending.amount, 
+                                      spending.display_currency, 
+                                      spending.original_amount, 
+                                      spending.original_currency
+                                    ).secondary}
+                                  </div>
+                                )}
+                              </div>
                               <div className="d-flex gap-1">
                                 <Button 
                                   variant="outline-primary" 
