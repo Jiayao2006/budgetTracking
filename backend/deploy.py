@@ -27,8 +27,56 @@ def deploy_database():
         print("📦 Importing database modules...")
         from app.database import create_tables, engine
         
-        print("🗄️ Creating database tables...")
-        create_tables()
+        print("🗄️ Running database migrations...")
+        try:
+            # Try to run alembic migrations first
+            import subprocess
+            import alembic.config
+            from alembic import command
+            
+            # Create alembic configuration
+            alembic_cfg = alembic.config.Config("alembic.ini")
+            
+            # Override database URL if set in environment
+            if database_url:
+                alembic_cfg.set_main_option("sqlalchemy.url", database_url)
+            
+            print("📊 Running alembic upgrade head...")
+            command.upgrade(alembic_cfg, "head")
+            print("✅ Database migrations completed!")
+            
+        except Exception as migration_error:
+            print(f"⚠️ Migration failed, falling back to create_tables: {migration_error}")
+            print("🗄️ Creating database tables...")
+            create_tables()
+        
+        # Ensure all required columns exist
+        print("🔍 Verifying database schema...")
+        try:
+            from sqlalchemy import text
+            with engine.connect() as conn:
+                # Check if preferred_currency column exists
+                result = conn.execute(text("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'users' 
+                    AND column_name = 'preferred_currency'
+                """))
+                
+                if not result.fetchone():
+                    print("⚠️ preferred_currency column missing, adding manually...")
+                    conn.execute(text("""
+                        ALTER TABLE users 
+                        ADD COLUMN preferred_currency VARCHAR(3) NOT NULL DEFAULT 'USD'
+                    """))
+                    conn.commit()
+                    print("✅ Added preferred_currency column manually")
+                else:
+                    print("✅ preferred_currency column exists")
+                    
+        except Exception as schema_error:
+            print(f"⚠️ Schema verification failed: {schema_error}")
+            # Continue anyway as this might be SQLite
         
         # Test database connection
         print("🧪 Testing database connection...")

@@ -2,6 +2,13 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 import os
+import sys
+
+# Add the backend app directory to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+# Import models to get metadata
+from app.models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -11,7 +18,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = None  # Will set when models are added
+target_metadata = Base.metadata  # Set target metadata from models
 
 # Optionally override DB URL from env var
 DATABASE_URL = os.getenv("DATABASE_URL")
