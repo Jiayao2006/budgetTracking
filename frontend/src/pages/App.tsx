@@ -42,29 +42,34 @@ const AppContent: React.FC = () => {
     
     try {
       setLoading(true);
-      console.log('Loading dashboard data...');
+      console.log('🔄 Loading dashboard data for user:', user.email);
+      console.log('🔐 Auth token present:', !!localStorage.getItem('token'));
       
       const [statsResponse, spendingsResponse] = await Promise.all([
         authenticatedFetch(`${API_BASE}/api/spendings/dashboard`),
         authenticatedFetch(`${API_BASE}/api/spendings`)
       ]);
       
-      console.log('Stats response status:', statsResponse.status);
-      console.log('Spendings response status:', spendingsResponse.status);
+      console.log('📊 Stats response status:', statsResponse.status);
+      console.log('💰 Spendings response status:', spendingsResponse.status);
       
       if (!statsResponse.ok) {
-        console.error('Dashboard stats failed:', await statsResponse.text());
+        console.error('❌ Dashboard stats failed:', await statsResponse.text());
       }
       
       if (!spendingsResponse.ok) {
-        console.error('Spendings fetch failed:', await spendingsResponse.text());
+        const errorText = await spendingsResponse.text();
+        console.error('❌ Spendings fetch failed:', errorText);
+        console.error('❌ Spendings response status:', spendingsResponse.status);
+        return;
       }
       
       const dashboardStats = await statsResponse.json();
       const allSpendings = await spendingsResponse.json();
       
-      console.log('Dashboard stats:', dashboardStats);
-      console.log('All spendings count:', allSpendings.length);
+      console.log('📊 Dashboard stats:', dashboardStats);
+      console.log('💰 All spendings count:', allSpendings.length);
+      console.log('💰 All spendings data:', allSpendings);
       
       setStats(dashboardStats);
       setSpendings(allSpendings);

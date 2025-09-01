@@ -41,9 +41,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
     
+    console.log('🔐 AuthContext: Checking stored auth data...');
+    console.log('🔐 AuthContext: Stored token:', storedToken ? 'Present' : 'Missing');
+    console.log('🔐 AuthContext: Stored user:', storedUser ? 'Present' : 'Missing');
+    
     if (storedToken && storedUser) {
+      console.log('🔐 AuthContext: Restoring user session');
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      const userData = JSON.parse(storedUser);
+      console.log('🔐 AuthContext: User data:', userData);
+      setUser(userData);
+    } else {
+      console.log('🔐 AuthContext: No stored session found');
     }
   }, []);
 

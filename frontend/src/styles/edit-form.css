@@ -1,0 +1,152 @@
+/* Simple Edit Form Design */
+.simple-edit-form {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 12px 0;
+}
+
+/* Form Grid Layout */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* Amount and Currency Group */
+.amount-currency-group {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.amount-field {
+  flex: 1.5;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.currency-field {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* Amount and Currency Alignment */
+.amount-field .form-control,
+.currency-field .form-select {
+  height: 42px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  margin-top: auto;
+}
+
+.category-field {
+  grid-column: 1;
+}
+
+.label-field {
+  grid-column: 1;
+}
+
+.location-field {
+  grid-column: 1;
+}
+
+.description-field {
+  grid-column: 1;
+}
+
+/* Form Controls */
+.simple-edit-form .form-control,
+.simple-edit-form .form-select {
+  height: 42px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  vertical-align: top;
+}
+
+.simple-edit-form .form-control:focus,
+.simple-edit-form .form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Textarea specific styling */
+.simple-edit-form textarea.form-control {
+  height: auto;
+  min-height: 85px;
+  resize: vertical;
+}
+
+/* Buttons */
+.form-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #dee2e6;
+}
+
+.form-buttons .btn {
+  padding: 8px 20px;
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .simple-edit-form {
+    padding: 16px;
+    margin: 10px 0;
+  }
+  
+  .amount-currency-group {
+    flex-direction: column;
+    gap: 14px;
+  }
+  
+  .amount-field,
+  .currency-field {
+    flex: 1;
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .amount-field .form-control,
+  .currency-field .form-select {
+    width: 100%;
+  }
+  
+  .form-grid {
+    gap: 14px;
+  }
+  
+  .form-buttons {
+    justify-content: stretch;
+    gap: 10px;
+  }
+  
+  .form-buttons .btn {
+    flex: 1;
+  }
+}
+
+/* Empty State Cart Icon Alignment */
+.text-center .fa-shopping-cart {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
