@@ -167,12 +167,53 @@ async def update_spending(
     if not db_spending:
         raise HTTPException(status_code=404, detail="Spending not found")
     
-    for key, value in spending.dict().items():
-        setattr(db_spending, key, value)
+    print(f"[SPENDING] Update spending ID {spending_id} for user {current_user.id}")
+    print(f"[SPENDING] Update data: {spending.dict()}")
     
-    db.commit()
-    db.refresh(db_spending)
-    return db_spending
+    try:
+        # Get user's preferred currency
+        display_currency = current_user.preferred_currency
+        original_currency = spending.original_currency.upper()
+        original_amount = spending.amount
+        
+        # Convert amount to user's preferred currency if different
+        if original_currency != display_currency:
+            print(f"[SPENDING] Converting {original_amount} {original_currency} to {display_currency}")
+            exchange_rate = await currency_service.get_exchange_rate(original_currency, display_currency)
+            
+            if exchange_rate is None:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Unable to get exchange rate from {original_currency} to {display_currency}"
+                )
+            
+            converted_amount = round(original_amount * exchange_rate, 2)
+            print(f"[SPENDING] Converted amount: {converted_amount} {display_currency} (rate: {exchange_rate})")
+        else:
+            exchange_rate = 1.0
+            converted_amount = original_amount
+        
+        # Update spending with currency information
+        db_spending.amount = converted_amount  # Converted amount in display currency
+        db_spending.original_amount = original_amount  # Original amount in input currency
+        db_spending.original_currency = original_currency
+        db_spending.display_currency = display_currency
+        db_spending.exchange_rate = exchange_rate
+        db_spending.category = spending.category
+        db_spending.location = spending.location
+        db_spending.description = spending.description
+        db_spending.label = spending.label
+        db_spending.date = spending.date
+        
+        db.commit()
+        db.refresh(db_spending)
+        
+        print(f"[SPENDING] Updated spending ID {spending_id} for user {current_user.id}")
+        return db_spending
+    except Exception as e:
+        print(f"[SPENDING] Error updating spending: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to update spending: {str(e)}")
 
 @router.delete("/{spending_id}")
 async def delete_spending(

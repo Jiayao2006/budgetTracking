@@ -6,6 +6,7 @@ import { formatDateLocal, parseDateLocal } from '../utils/dateUtils';
 import { CustomCalendar } from './CustomCalendar';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatSpendingAmount } from '../utils/currencyFormat';
+import { CurrencySelector } from './CurrencySelector';
 import '../styles/custom-calendar.css';
 
 interface SpendingCalendarProps {
@@ -63,13 +64,14 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
       category: spending.category,
       location: spending.location,
       description: spending.description || '',
+      label: spending.label || '', // Include label field
       date: spending.date
     });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditForm({ amount: 0, original_currency: 'USD', category: 'Food', location: '', description: '', date: '' });
+    setEditForm({ amount: 0, original_currency: 'USD', category: 'Food', location: '', description: '', label: '', date: '' });
   };
 
   const saveEdit = () => {
@@ -185,6 +187,15 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
                               />
                             </Col>
                             <Col xs={12} sm={6} className="mt-2 mt-sm-0">
+                              <CurrencySelector
+                                value={editForm.original_currency || 'USD'}
+                                onChange={(currency) => setEditForm({...editForm, original_currency: currency})}
+                                size="sm"
+                              />
+                            </Col>
+                          </Row>
+                          <Row className="mb-2">
+                            <Col xs={12} sm={6}>
                               <Form.Select
                                 value={editForm.category}
                                 onChange={(e) => setEditForm({...editForm, category: e.target.value})}
@@ -194,6 +205,15 @@ export const SpendingCalendar: React.FC<SpendingCalendarProps> = ({
                                   <option key={cat} value={cat}>{cat}</option>
                                 ))}
                               </Form.Select>
+                            </Col>
+                            <Col xs={12} sm={6} className="mt-2 mt-sm-0">
+                              <Form.Control
+                                type="text"
+                                value={editForm.label || ''}
+                                onChange={(e) => setEditForm({...editForm, label: e.target.value})}
+                                placeholder="Label (optional)"
+                                size="sm"
+                              />
                             </Col>
                           </Row>
                           <Row className="mb-2">
